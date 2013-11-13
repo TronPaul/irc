@@ -1,0 +1,29 @@
+An IrcConnection
+  should be registered after connecting
+  should know what nick it is using
+  should pong when pinged
+  should keep a heartbeat (ping, pong)
+  should be able to connect with a password
+  should be able to use extended irc features (CAP)
+  should be able to reconnect if connection is lost
+  should recover from ERR_ERRONEUSNICKNAME
+  should recover from ERR_NICKNAMEINUSE
+  should raise error ERR_PASSWDMISMATCH
+  should be able to gracefully quit
+  should handle dcc
+  should handle ctcp
+  should handle bad messages
+  should be able to throttle messages
+  should be able to use SASL
+
+A ChannelManager
+  should know what channels it is in
+  should know what users are in each channel it is in
+  should be able to rejoin a channel it is kicked from
+
+A bot
+  should be able to be managed by irc users
+  should be able to auth users
+  should be able to load handlers
+  should be able to unload handlers
+  should be able to reload handlers
