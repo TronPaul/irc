@@ -34,7 +34,7 @@ class IrcClient:
         self.host = host
         self.port = port
         self.ssl = ssl
-        
+
         self.attempted_nick = nick
         self.password = password
         self.realname = realname or nick
@@ -102,7 +102,7 @@ class IrcClient:
             self.attempted_nick = None
         elif message.command in [irc.codes.ERR_NICKNAMEINUSE, irc.codes.ERR_ERRONEUSNICKNAME]:
             self.send_nick(self.attempted_nick + '_')
-        elif message.command == 'NICK' and message.prefix.nick == self.nick:
+        elif message.command == 'NICK' and message.nick == self.nick:
             self.nick = message.params[0]
             self.attempted_nick = None
 

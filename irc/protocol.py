@@ -9,11 +9,9 @@ EOL = CR + NL
 class ProtocolViolationError(Exception):
     pass
 
-def irc_split(data):
+def split(data):
     buf = data
-    nick = None
-    username = None
-    host = None
+    prefix = None
     trailing = None
     command = None
 
@@ -25,8 +23,6 @@ def irc_split(data):
     if buf.startswith(b':'):
         try:
             prefix, buf = buf[1:].split(DELIM, 1)
-            nick, prefix = prefix.split(b'!', 1)
-            username, host = prefix.split('@', 1)    
         except ValueError:
             pass
 
@@ -46,12 +42,29 @@ def irc_split(data):
         if trailing is not None:
             params.append(trailing)
 
-    return (nick, username, host), command, params
+    return prefix, command, params
 
-def irc_unsplit(prefix, command, params):
+def split_prefix(prefix):
+    nick = None
+    username = None
+    host = None
+
+    try:
+        nick, prefix = prefix.split('!', 1)
+    except ValueError:
+        pass
+
+    try:
+        username, host = prefix.split('@', 1)
+    except ValueError:
+        pass
+
+    return nick, username, host
+
+def unsplit(prefix_raw, command, params):
     buf = b''
-    if prefix:
-        buf += b':' + prefix + DELIM
+    if prefix_raw:
+        buf += b':' + prefix_raw + DELIM
     buf += command + DELIM
     if params is None:
         pass
@@ -70,87 +83,20 @@ def irc_unsplit(prefix, command, params):
                 buf += b':' + trailing
     return buf.strip() + EOL
 
-X_DELIM = bytes((0o1,))
-X_QUOTE = bytes((0o134,))
-M_QUOTE = bytes((0o20,))
-
-_low_level_quote_table = {
-    NUL: M_QUOTE + b'0',
-    NL: M_QUOTE + b'n',
-    CR: M_QUOTE + b'r',
-    M_QUOTE: M_QUOTE * 2
-}
-
-_low_level_dequote_table = {
-    v: k for k, v in _low_level_quote_table.items()}
-
-_ctcp_quote_table = {
-    X_DELIM: X_QUOTE + b'a',
-    X_QUOTE: X_QUOTE * 2
-}
-
-_ctcp_dequote_table = {
-    v: k for k, v in _ctcp_quote_table.items()}
-
-def _quote(string, table):
-    cursor = 0
-    buf = b''
-    for pos, char in enumerate(string):
-        if pos is 0:
-            continue
-        if char in table:
-            buf += string[cursor:pos] + table[char]
-            cursor = pos + 1
-    buf += string[cursor:]
-    return buf
-
-def _dequote(string, table):
-    cursor = 0
-    buf = b''
-    last_char = b''
-    for pos, char in enumerate(string):
-        if pos is 0:
-            last_char = char
-            continue
-        if last_char + char in table:
-            buf += string[cursor:pos] + table[char]
-            cursor = pos + 1
-        last_char = char
-
-    buf += string[cursor:]
-    return buf
-
-def low_level_quote(string):
-    return _quote(string, _low_level_quote_table)
-
-def low_level_dequote(string):
-    return _dequote(string, _low_level_dequote_table)
-
-def ctcp_quote(string):
-    return _quote(string, _ctcp_quote_table)
-
-def ctcp_dequote(string):
-    return _dequote(string, _ctcp_dequote_table)
-
-class Prefix:
-    def __init__(self, nick, username, host):
-        self.nick = nick
-        self.username = username
-        self.host = host
-
-    def encode(self):
-        prefix = nick
-        if username:
-            prefix.append('!{1}'.format(username))
-            if host:
-                prefix.append('@{1}'.format(host))
-        return prefix
+def split_message(raw):
+    prefix, command, params = split(raw)
+    prefix = str(prefix, 'utf-8') if prefix else None
+    command = str(command, 'utf-8')
+    params = [str(p, 'utf-8') for p in params]
+    return Message(command, params, prefix=prefix)
 
 class Message:
     def __init__(self, command, params, prefix=None):
         if not command:
             raise ValueError
         self.prefix = prefix
+        self.nick, self.username, self.host = (split_prefix(prefix) if prefix
+            else (None, None, None))
         self.command = command
         self.params = params
 
@@ -162,39 +108,10 @@ class Message:
         prefix = bytes(self.prefix, 'utf-8') if self.prefix else None
         command = bytes(self.command, 'utf-8')
         params = [bytes(p, 'utf-8') for p in self.params] if self.params else self.params
-        return irc_unsplit(prefix, command, params)
+        return unsplit(prefix, command, params)
 
 class MessageParser:
     def __call__(self, out, buf):
         while True:
             raw_data = yield from buf.readuntil(EOL)
-            prefix, command, params = irc_split(raw_data)
-            nick, username, host = irc_split_prefix(prefix)
-            if params:
-                params = DELIM.join(params)
-                decoded = low_level_dequote(params)
-                messages = decoded.split(X_DELIM)
-                messages.reverse()
-
-                odd = False
-                extended_messages = []
-                normal_messages = []
-
-                while messages:
-                    message = messages.pop()
-                    if odd:
-                        if message:
-                            ctcp_decoded = ctcp_dequote(message)
-                            split = ctcp_decoded.split(DELIM, 1)
-                            tag = split[0]
-                            data = None
-                            if len(split) > 1:
-                                data = split[1]
-                            extended_messages.append((tag, data))
-                    else:
-                        if message:
-                            normal_messages += filter(None, message.split(DELIM))
-                    odd = not odd
-            command = str(command, 'utf-8')
-            normal_messages = [str(m, 'utf-8') for m in normal_messages]
-            out.feed_data(Message(command, normal_messages, prefix=prefix))
+            out.feed_data(split_message(raw_data))
