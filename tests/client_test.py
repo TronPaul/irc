@@ -139,8 +139,8 @@ class TestClient(unittest.TestCase):
         task = asyncio.Task(c._read_loop(stream), loop=self.loop)
         self.loop.run_until_complete(task)
         
-        self.transport.write.assert_called_once_with(irc.commands.Nick('TestNick_').encode())
-        self.assertEquals(c.attempted_nick,'TestNick_')
+        self.assertEquals(c.nick, 'TestNick')
+        self.assertTrue(c.attempted_nick is None)
 
     def test_quit(self):
         pass
@@ -149,9 +149,6 @@ class TestClient(unittest.TestCase):
         pass
 
     def test_handle_bad_message(self):
-        pass
-
-    def test_handle_nick_change(self):
         pass
 
     def test_heartbeat(self):
