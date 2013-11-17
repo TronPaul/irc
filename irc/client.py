@@ -84,6 +84,8 @@ class IrcClient:
                     yield from handler
             except irc.parser.EofStream:
                 break
+            except irc.protocol.ProtocolViolationError as e:
+                IRC_LOG.warn('Recieved malformed message "{raw}"'.format(raw=e.raw))
 
     def log_message(self, message, sending=False):
         direction = 'SEND' if sending else 'RECV'

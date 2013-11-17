@@ -60,9 +60,6 @@ class TestClient(unittest.TestCase):
         self.loop.run_until_complete(task)
         self.assertEquals(self.transport.write.call_args_list, expected)
 
-    def test_reconnect_on_eof_when_enabled(self):
-        pass
-
     def test_handle_ping(self):
         connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
@@ -150,15 +147,3 @@ class TestClient(unittest.TestCase):
         
         self.assertEquals(c.nick, 'TestNick')
         self.assertTrue(c.attempted_nick is None)
-
-    def test_quit(self):
-        pass
-
-    def test_throttle(self):
-        pass
-
-    def test_handle_bad_message(self):
-        pass
-
-    def test_heartbeat(self):
-        pass

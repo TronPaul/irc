@@ -7,7 +7,8 @@ CR = b'\r'
 EOL = CR + NL
 
 class ProtocolViolationError(Exception):
-    pass
+    def __init__(self, raw):
+        self.raw = raw
 
 def split(data):
     buf = data
