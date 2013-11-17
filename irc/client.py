@@ -105,6 +105,8 @@ class IrcClient:
         elif message.command == 'NICK' and message.nick == self.nick:
             self.nick = message.params[0]
             self.attempted_nick = None
+        elif message.command == irc.codes.ERR_PASSWDMISMATCH:
+            raise irc.codes.PasswordMismatchError
 
     def send_message(self, message):
         self.log_message(message, sending=True)

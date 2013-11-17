@@ -107,8 +107,17 @@ class TestClient(unittest.TestCase):
         self.transport.write.assert_called_once_with(irc.commands.Nick('TestNick_').encode())
         self.assertEquals(c.attempted_nick,'TestNick_')
 
-    def test_handle_paswdmismatch_raises_error(self):
-        pass
+    def test_handle_passwdmismatch_raises_error(self):
+        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
+        c._transport = self.transport
+
+        stream = irc.parser.StreamProtocol(loop=self.loop)
+        stream.feed_data(irc.protocol.Message(irc.codes.ERR_PASSWDMISMATCH, ['Bad Password']).encode())
+        stream.feed_eof()
+
+        task = asyncio.Task(c._read_loop(stream), loop=self.loop)
+        self.assertRaises(irc.codes.PasswordMismatchError, self.loop.run_until_complete, task)
 
     def test_handle_erroneusnickname(self):
         connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
