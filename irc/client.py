@@ -24,7 +24,7 @@ def _connect(host, port, ssl, loop):
 class IrcClient:
     _transport = None
     _message_parser = irc.protocol.MessageParser()
-    _registered = False
+    registered = False
     nick = None
 
     _message_handler = None
@@ -47,6 +47,7 @@ class IrcClient:
 
         self.message_log = message_log
         self.message_log_format = message_log_format
+        self.handlers = {}
 
     @asyncio.coroutine
     def start(self):
@@ -90,6 +91,18 @@ class IrcClient:
         self.message_log.info(self.message_log_format.format(
             dir=direction, message=message))
 
+    def handles(self, command):
+        def decorator(f):
+            self.add_handler(command, f)
+            return f
+
+        return decorator
+
+    def add_handler(self, command, f):
+        if command not in self.handlers:
+            self.handlers[command] = []
+        self.handlers[command].append(f)
+
     @asyncio.coroutine
     def handle_message(self, message):
         # handle irc protocol commands
@@ -97,7 +110,7 @@ class IrcClient:
             self.send_message(irc.commands.Pong(message.params))
         # TODO: check for race condition
         elif message.command == irc.codes.RPL_WELCOME:
-            self._registered = True
+            self.registered = True
             self.nick = self.attempted_nick
             self.attempted_nick = None
         elif message.command in [irc.codes.ERR_NICKNAMEINUSE, irc.codes.ERR_ERRONEUSNICKNAME]:
@@ -107,6 +120,9 @@ class IrcClient:
             self.attempted_nick = None
         elif message.command == irc.codes.ERR_PASSWDMISMATCH:
             raise irc.codes.PasswordMismatchError
+
+        handlers = self.handlers[message.command]
+        [asyncio.Task(h(self, message), loop=self._loop) for h in handlers]
 
     def send_message(self, message):
         self.log_message(message, sending=True)

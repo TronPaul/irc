@@ -89,7 +89,7 @@ class TestClient(unittest.TestCase):
 
         task = asyncio.Task(c._read_loop(stream), loop=self.loop)
         self.loop.run_until_complete(task)
-        self.assertTrue(c._registered)
+        self.assertTrue(c.registered)
         self.assertEquals(c.nick, 'TestNick')
         self.assertTrue(c.attempted_nick is None)
 
