@@ -1,5 +1,3 @@
-import logging
-
 DELIM = bytes((0o40,))
 NUL = bytes((0o0,))
 NL = b'\n'
