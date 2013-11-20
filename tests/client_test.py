@@ -94,7 +94,7 @@ class TestClient(unittest.TestCase):
         self.assertTrue(c.attempted_nick is None)
 
     def test_handle_err_nicknameinuse(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         c._transport = self.transport
 
@@ -109,7 +109,7 @@ class TestClient(unittest.TestCase):
         self.assertEquals(c.attempted_nick, 'TestNick_')
 
     def test_handle_passwdmismatch_raises_error(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         c._transport = self.transport
 
