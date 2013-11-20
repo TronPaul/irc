@@ -131,7 +131,7 @@ class IrcClient:
         elif message.command == irc.codes.ERR_PASSWDMISMATCH:
             raise irc.codes.PasswordMismatchError
 
-        handlers = self.handlers[message.command]
+        handlers = self.handlers.get(message.command, [])
         [asyncio.Task(h(self, message), loop=self._loop) for h in handlers]
 
     def send_nick(self, nick):
