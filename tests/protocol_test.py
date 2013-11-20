@@ -1,14 +1,15 @@
 import unittest
 import irc.protocol as protocol
 
+
 class TestSpliteMessage(unittest.TestCase):
     def test_split_message_without_EOL_raises_error(self):
         self.assertRaises(protocol.ProtocolViolationError,
-            protocol.split_message, b'NICK Test')
+                          protocol.split_message, b'NICK Test')
 
     def test_split_message_without_command_raises_error(self):
         self.assertRaises(protocol.ProtocolViolationError,
-            protocol.split_message, b':prefix \r\n')
+                          protocol.split_message, b':prefix \r\n')
 
     def test_split_without_prefix(self):
         message = protocol.split_message(b'NICK Test\r\n')
@@ -36,6 +37,7 @@ class TestSpliteMessage(unittest.TestCase):
         self.assertTrue(message.host is None)
         self.assertEquals(message.command, 'USER')
         self.assertEquals(message.params, ['Test', 'Test', 'arg', 'A Real Name'])
+
 
 class TestUnsplit(unittest.TestCase):
     def test_unsplit_without_prefix(self):

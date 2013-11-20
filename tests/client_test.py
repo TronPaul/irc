@@ -7,6 +7,7 @@ import irc.protocol
 import irc.parser
 import irc.codes
 
+
 class TestClient(unittest.TestCase):
     def setUp(self):
         self.loop = asyncio.new_event_loop()
@@ -14,14 +15,17 @@ class TestClient(unittest.TestCase):
 
         self.transport = unittest.mock.Mock()
         self.protocol = unittest.mock.Mock()
+
         @asyncio.coroutine
         def gen():
             return self.transport, self.protocol
+
         self.connect_mock_config = {'return_value.__iter__.return_value': gen()}
 
         @asyncio.coroutine
         def empty():
             pass
+
         self.read_loop_mock_config = {'return_value': empty()}
 
     def tearDown(self):
@@ -36,8 +40,8 @@ class TestClient(unittest.TestCase):
         return thing
 
     def test_register_on_connect(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
-        read_loop_mock = self.create_patch('irc.client.IrcClient._read_loop', **self.read_loop_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._read_loop', **self.read_loop_mock_config)
 
         c = irc.client.IrcClient('example.com', 'TestNick', loop=self.loop)
         expected = [unittest.mock.call(irc.commands.Nick('TestNick').encode()),
@@ -48,8 +52,8 @@ class TestClient(unittest.TestCase):
         self.assertEquals(self.transport.write.call_args_list, expected)
 
     def test_register_with_password_on_connect(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
-        read_loop_mock = self.create_patch('irc.client.IrcClient._read_loop', **self.read_loop_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._read_loop', **self.read_loop_mock_config)
 
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         expected = [unittest.mock.call(irc.commands.Pass('testpass').encode()),
@@ -64,7 +68,7 @@ class TestClient(unittest.TestCase):
         pass
 
     def test_handle_ping(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         c._transport = self.transport
         expected = [unittest.mock.call(irc.commands.Pong(['12345']).encode())]
@@ -78,7 +82,7 @@ class TestClient(unittest.TestCase):
         self.assertEquals(self.transport.write.call_args_list, expected)
 
     def test_handle_rpl_welcome(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         c._transport = self.transport
 
@@ -103,15 +107,15 @@ class TestClient(unittest.TestCase):
 
         task = asyncio.Task(c._read_loop(stream), loop=self.loop)
         self.loop.run_until_complete(task)
-        
+
         self.transport.write.assert_called_once_with(irc.commands.Nick('TestNick_').encode())
-        self.assertEquals(c.attempted_nick,'TestNick_')
+        self.assertEquals(c.attempted_nick, 'TestNick_')
 
     def test_handle_paswdmismatch_raises_error(self):
         pass
 
     def test_handle_erroneusnickname(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         c._transport = self.transport
 
@@ -121,12 +125,12 @@ class TestClient(unittest.TestCase):
 
         task = asyncio.Task(c._read_loop(stream), loop=self.loop)
         self.loop.run_until_complete(task)
-        
+
         self.transport.write.assert_called_once_with(irc.commands.Nick('TestNick_').encode())
-        self.assertEquals(c.attempted_nick,'TestNick_')
+        self.assertEquals(c.attempted_nick, 'TestNick_')
 
     def test_set_nickname_on_matching_nickname(self):
-        connect_mock = self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
+        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
         c._transport = self.transport
         c.nick = 'PrevNick'
@@ -138,7 +142,7 @@ class TestClient(unittest.TestCase):
 
         task = asyncio.Task(c._read_loop(stream), loop=self.loop)
         self.loop.run_until_complete(task)
-        
+
         self.assertEquals(c.nick, 'TestNick')
         self.assertTrue(c.attempted_nick is None)
 
