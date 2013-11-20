@@ -1,6 +1,7 @@
 import logging
 import functools
 import asyncio
+import asyncio.queues
 import inspect
 import irc.protocol
 import irc.parser
@@ -27,7 +28,8 @@ class IrcClient:
     registered = False
     nick = None
 
-    _message_handler = None
+    _read_handler = None
+    _send_handler = None
 
     def __init__(self, host, nick, ssl=False, port=6667, username=None,
                  realname=None, hostname=None, password=None, loop=None,
@@ -44,6 +46,7 @@ class IrcClient:
         self.hostname = hostname or host
 
         self._loop = loop or asyncio.get_event_loop()
+        self._send_queue = asyncio.queues.Queue()
 
         self.message_log = message_log
         self.message_log_format = message_log_format
@@ -55,7 +58,8 @@ class IrcClient:
         self._transport, protocol = yield from conn_task
         IRC_LOG.debug('Connected')
         self._register()
-        self._message_handler = asyncio.async(self._read_loop(protocol), loop=self._loop)
+        self._read_handler = asyncio.async(self._read_loop(protocol), loop=self._loop)
+        self._send_handler = asyncio.async(self._send_loop, loop=self._loop)
 
     def _connect(self):
         conn = _connect(self.host, self.port, self.ssl, self._loop)
@@ -85,6 +89,11 @@ class IrcClient:
                 break
             except irc.protocol.ProtocolViolationError as e:
                 IRC_LOG.warn('Recieved malformed message "{raw}"'.format(raw=e.raw))
+
+    def _send_loop(self):
+        while True:
+            raw = yield from self._send_queue.get()
+            self._transport.write(raw)
 
     def log_message(self, message, sending=False):
         direction = 'SEND' if sending else 'RECV'
@@ -124,10 +133,13 @@ class IrcClient:
         handlers = self.handlers[message.command]
         [asyncio.Task(h(self, message), loop=self._loop) for h in handlers]
 
+    def send_nick(self, nick):
+        self.attempted_nick = nick
+        self.send_message(irc.commands.Nick(nick))
+
     def send_message(self, message):
         self.log_message(message, sending=True)
         self._transport.write(message.encode())
 
-    def send_nick(self, nick):
-        self.attempted_nick = nick
-        self.send_message(irc.commands.Nick(nick))
+    def send_raw(self, raw):
+        self._send_queue.put(raw)
