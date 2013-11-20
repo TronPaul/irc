@@ -46,7 +46,7 @@ class IrcClient:
         self.hostname = hostname or host
 
         self._loop = loop or asyncio.get_event_loop()
-        self._send_queue = asyncio.queues.Queue()
+        self._send_queue = asyncio.queues.Queue(loop=self._loop)
 
         self.message_log = message_log
         self.message_log_format = message_log_format
