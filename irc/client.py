@@ -32,8 +32,8 @@ class IrcClient:
     _send_handler = None
 
     def __init__(self, host, nick, ssl=False, port=6667, username=None,
-                 realname=None, hostname=None, password=None, loop=None,
-                 message_log=MESSAGE_LOG,
+                 realname=None, hostname=None, password=None, throttle=None,
+                 loop=None, message_log=MESSAGE_LOG,
                  message_log_format=MESSAGE_LOG_FORMAT):
         self.host = host
         self.port = port
@@ -47,6 +47,7 @@ class IrcClient:
 
         self._loop = loop or asyncio.get_event_loop()
         self._send_queue = asyncio.queues.Queue(loop=self._loop)
+        self.throttle = throttle
 
         self.message_log = message_log
         self.message_log_format = message_log_format
@@ -92,9 +93,14 @@ class IrcClient:
 
     @asyncio.coroutine
     def _send_loop(self):
+        next_send = self._loop.time() if self.throttle else None
         while True:
             raw = yield from self._send_queue.get()
+            if next_send and next_send > self._loop.time():
+                yield from asyncio.sleep(next_send - self._loop.time(), loop=self._loop)
             self._transport.write(raw)
+            if self.throttle:
+                next_send = self._loop.time() + self.throttle
 
     def log_message(self, message, sending=False):
         direction = 'SEND' if sending else 'RECV'
