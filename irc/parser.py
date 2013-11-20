@@ -231,7 +231,7 @@ class ParserBuffer(bytearray):
                 self.extend(chunk)
 
                 # shrink buffer
-                if (self.offset and len(self) > 8196):
+                if self.offset and len(self) > 8196:
                     self._shrink()
 
     def feed_data(self, data):
@@ -280,7 +280,7 @@ class ParserBuffer(bytearray):
                     raise exc('Line is too long.')
 
                 start, self.offset = self.offset, end
-                self.size = self.size - size
+                self.size -= size
 
                 return self[start:end]
             else:
@@ -309,7 +309,7 @@ class ParserBuffer(bytearray):
             stop_line = self.find(stop, self.offset)
             if stop_line >= 0:
                 end = stop_line + stop_len
-                self.size = self.size - (end - self.offset)
+                self.size -= end - self.offset
                 self.offset = end
                 return
             else:

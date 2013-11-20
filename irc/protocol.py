@@ -1,20 +1,19 @@
-import logging
-
 DELIM = bytes((0o40,))
 NUL = bytes((0o0,))
 NL = b'\n'
 CR = b'\r'
 EOL = CR + NL
 
+
 class ProtocolViolationError(Exception):
     def __init__(self, raw):
         self.raw = raw
+
 
 def split(data):
     buf = data
     prefix = None
     trailing = None
-    command = None
 
     if buf.endswith(EOL):
         buf = buf[:-2]
@@ -45,6 +44,7 @@ def split(data):
 
     return prefix, command, params
 
+
 def split_prefix(prefix):
     nick = None
     username = None
@@ -61,6 +61,7 @@ def split_prefix(prefix):
         pass
 
     return nick, username, host
+
 
 def unsplit(prefix_raw, command, params):
     buf = b''
@@ -84,6 +85,7 @@ def unsplit(prefix_raw, command, params):
                 buf += b':' + trailing
     return buf.strip() + EOL
 
+
 def split_message(raw):
     prefix, command, params = split(raw)
     prefix = str(prefix, 'utf-8') if prefix else None
@@ -91,25 +93,27 @@ def split_message(raw):
     params = [str(p, 'utf-8') for p in params]
     return Message(command, params, prefix=prefix)
 
+
 class Message:
     def __init__(self, command, params, prefix=None):
         if not command:
             raise ValueError
         self.prefix = prefix
         self.nick, self.username, self.host = (split_prefix(prefix) if prefix
-            else (None, None, None))
+                                               else (None, None, None))
         self.command = command
         self.params = params
 
     def __repr__(self):
         return 'Message({prefix}, {command}, {params})'.format(prefix=self.prefix,
-            command=self.command, params=self.params)
+                                                               command=self.command, params=self.params)
 
     def encode(self):
         prefix = bytes(self.prefix, 'utf-8') if self.prefix else None
         command = bytes(self.command, 'utf-8')
         params = [bytes(p, 'utf-8') for p in self.params] if self.params else self.params
         return unsplit(prefix, command, params)
+
 
 class MessageParser:
     def __call__(self, out, buf):

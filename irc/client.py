@@ -11,6 +11,7 @@ IRC_LOG = logging.getLogger('irc')
 MESSAGE_LOG = logging.getLogger('irc.message')
 MESSAGE_LOG_FORMAT = '{dir} Message: {message}'
 
+
 @asyncio.coroutine
 def _connect(host, port, ssl, loop):
     IRC_LOG.debug('Connecting...')
@@ -18,6 +19,7 @@ def _connect(host, port, ssl, loop):
         functools.partial(irc.parser.StreamProtocol, loop=loop),
         host, port, ssl=ssl)
     return transport, proto
+
 
 class IrcClient:
     _transport = None
@@ -28,7 +30,7 @@ class IrcClient:
     _message_handler = None
 
     def __init__(self, host, nick, ssl=False, port=6667, username=None,
-                 realname=None, hostname=None, password = None, loop=None,
+                 realname=None, hostname=None, password=None, loop=None,
                  message_log=MESSAGE_LOG,
                  message_log_format=MESSAGE_LOG_FORMAT):
         self.host = host
@@ -50,17 +52,13 @@ class IrcClient:
     def start(self):
         conn_task = self._connect()
         self._transport, protocol = yield from conn_task
+        IRC_LOG.debug('Connected')
         self._register()
         self._message_handler = asyncio.async(self._read_loop(protocol), loop=self._loop)
-
-    def connection_made(self, conn_task):
-        assert conn_task.done(), 'Connection task not complete'
-        IRC_LOG.debug('Connected')
 
     def _connect(self):
         conn = _connect(self.host, self.port, self.ssl, self._loop)
         conn_task = asyncio.async(conn, loop=self._loop)
-        conn_task.add_done_callback(self.connection_made)
         return conn_task
 
     def _register(self):
