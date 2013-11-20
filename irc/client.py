@@ -143,4 +143,4 @@ class IrcClient:
         self.send_raw(message.encode())
 
     def send_raw(self, raw):
-        self._send_queue.put(raw)
+        self._send_queue.put_nowait(raw)
