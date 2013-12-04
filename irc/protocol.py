@@ -10,15 +10,15 @@ class ProtocolViolationError(Exception):
         self.raw = raw
 
 
-def split(data):
-    buf = data
+def split(raw):
+    buf = raw
     prefix = None
     trailing = None
 
     if buf.endswith(EOL):
         buf = buf[:-2]
     else:
-        raise ProtocolViolationError
+        raise ProtocolViolationError(raw)
 
     if buf.startswith(b':'):
         try:
@@ -29,7 +29,7 @@ def split(data):
     try:
         command, buf = buf.split(DELIM, 1)
     except ValueError:
-        raise ProtocolViolationError('No command recieved: {msg}'.format(msg=data))
+        raise ProtocolViolationError('No command recieved: {msg}'.format(msg=raw))
 
     if buf.startswith(b':'):
         params = [buf[1:]]
