@@ -74,8 +74,9 @@ class TestClient(unittest.TestCase):
         stream.feed_data(irc.commands.Ping(['12345']).encode())
         stream.feed_eof()
 
-        task = asyncio.Task(c._read_loop(stream), loop=self.loop)
-        self.loop.run_until_complete(task)
+        read = asyncio.Task(c._read_loop(stream), loop=self.loop)
+        asyncio.Task(c._send_loop(), loop=self.loop)
+        self.loop.run_until_complete(read)
         self.assertEquals(self.transport.write.call_args_list, expected)
 
     def test_handle_rpl_welcome(self):
@@ -102,8 +103,9 @@ class TestClient(unittest.TestCase):
         stream.feed_data(irc.protocol.Message(irc.codes.ERR_NICKNAMEINUSE, ['TestNick', 'Nickname in use']).encode())
         stream.feed_eof()
 
-        task = asyncio.Task(c._read_loop(stream), loop=self.loop)
-        self.loop.run_until_complete(task)
+        read = asyncio.Task(c._read_loop(stream), loop=self.loop)
+        asyncio.Task(c._send_loop(), loop=self.loop)
+        self.loop.run_until_complete(read)
 
         self.transport.write.assert_called_once_with(irc.commands.Nick('TestNick_').encode())
         self.assertEquals(c.attempted_nick, 'TestNick_')
@@ -129,8 +131,9 @@ class TestClient(unittest.TestCase):
         stream.feed_data(irc.protocol.Message(irc.codes.ERR_ERRONEUSNICKNAME, ['TestNick', 'Nickname in use']).encode())
         stream.feed_eof()
 
-        task = asyncio.Task(c._read_loop(stream), loop=self.loop)
-        self.loop.run_until_complete(task)
+        read = asyncio.Task(c._read_loop(stream), loop=self.loop)
+        asyncio.Task(c._send_loop(), loop=self.loop)
+        self.loop.run_until_complete(read)
 
         self.transport.write.assert_called_once_with(irc.commands.Nick('TestNick_').encode())
         self.assertEquals(c.attempted_nick, 'TestNick_')
