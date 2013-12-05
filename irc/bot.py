@@ -37,8 +37,8 @@ class IrcBot(irc.client.IrcClient):
 
             command = Command(cmd, target, ' '.join(params))
 
-            handlers = self.command_handlers.get(cmd, [])
-            [asyncio.Task(h(self, command), loop=self._loop) for h in handlers]
+            if cmd in self.command_handlers:
+                asyncio.Task(self.command_handlers[cmd](self, command), loop=self._loop)
 
     @staticmethod
     @asyncio.coroutine
@@ -47,9 +47,7 @@ class IrcBot(irc.client.IrcClient):
             self.send_message(irc.commands.Join(c))
 
     def add_command_handler(self, command, f):
-        if command not in self.irc_handlers:
-            self.command_handlers[command] = []
-        self.command_handlers[command].append(f)
+        self.command_handlers[command] = f
 
     def handles_command(self, command):
         def decorator(f):
