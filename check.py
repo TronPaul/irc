@@ -1,16 +1,22 @@
 import asyncio
 import logging
-from irc import IrcClient
+from irc import IrcBot
 
-def run():
-    l = logging.getLogger('irc')
-    l.setLevel(logging.DEBUG)
-    h = logging.StreamHandler()
-    h.setLevel(logging.DEBUG)
-    l.addHandler(h)
-    loop = asyncio.get_event_loop()
-    c = IrcClient('irc.freenode.net', 'TulipBot', loop=loop)
-    asyncio.Task(c.start())
-    loop.run_forever()
+l = logging.getLogger('irc')
+l.setLevel(logging.DEBUG)
+h = logging.StreamHandler()
+h.setLevel(logging.DEBUG)
+l.addHandler(h)
+bot = IrcBot('irc.geeksirc.net', 'TulipBot')
 
-run()
+@bot.handles_command('echo')
+@asyncio.coroutine
+def echo(bot, command):
+    bot.send_privmsg(command.target, command.params)
+
+
+def start():
+    asyncio.Task(bot.start())
+    asyncio.get_event_loop().run_forever()
+
+start()

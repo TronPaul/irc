@@ -51,7 +51,7 @@ class IrcClient:
 
         self.message_log = message_log
         self.message_log_format = message_log_format
-        self.handlers = {}
+        self.irc_handlers = {}
 
     @asyncio.coroutine
     def start(self):
@@ -107,17 +107,17 @@ class IrcClient:
         self.message_log.info(self.message_log_format.format(
             dir=direction, message=message))
 
-    def handles(self, command):
+    def handles(self, irc_command):
         def decorator(f):
-            self.add_handler(command, f)
+            self.add_handler(irc_command, f)
             return f
 
         return decorator
 
-    def add_handler(self, command, f):
-        if command not in self.handlers:
-            self.handlers[command] = []
-        self.handlers[command].append(f)
+    def add_handler(self, irc_command, f):
+        if irc_command not in self.irc_handlers:
+            self.irc_handlers[irc_command] = []
+        self.irc_handlers[irc_command].append(f)
 
     @asyncio.coroutine
     def handle_message(self, message):
@@ -137,12 +137,15 @@ class IrcClient:
         elif message.command == irc.codes.ERR_PASSWDMISMATCH:
             raise irc.codes.PasswordMismatchError
 
-        handlers = self.handlers.get(message.command, [])
+        handlers = self.irc_handlers.get(message.command, [])
         [asyncio.Task(h(self, message), loop=self._loop) for h in handlers]
 
     def send_nick(self, nick):
         self.attempted_nick = nick
         self.send_message(irc.commands.Nick(nick))
+
+    def send_privmsg(self, target, message):
+        self.send_message(irc.commands.PrivMsg(target, message))
 
     def send_message(self, message):
         self.log_message(message, sending=True)
