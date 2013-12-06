@@ -55,7 +55,7 @@ def handle_privmsg(bot, message):
         command = irc.command.Command(cmd, target, params)
 
         if cmd in bot.command_handlers:
-            asyncio.Task(bot.command_handlers[cmd](bot, command), loop=bot._loop)
+            asyncio.Task(bot.command_handlers[cmd](bot, command), loop=bot.loop)
 
 @irc.command.command_handler
 def handle_load(bot, command):

@@ -53,6 +53,10 @@ class IrcClient:
         self.message_log_format = message_log_format
         self.irc_handlers = {}
 
+    @property
+    def loop(self):
+        return self._loop
+
     @asyncio.coroutine
     def start(self):
         conn_task = self._connect()
