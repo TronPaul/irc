@@ -12,7 +12,7 @@ bot = IrcBot('irc.geeksirc.net', 'TulipBot')
 @bot.handles_command('echo')
 @asyncio.coroutine
 def echo(bot, command):
-    bot.send_privmsg(command.target, command.params)
+    bot.send_privmsg(command.target, command.params_string)
 
 
 def start():
