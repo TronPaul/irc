@@ -1,6 +1,6 @@
 import asyncio
 import irc.client
-import irc.commands
+import irc.messages
 import irc.codes
 
 
@@ -44,7 +44,7 @@ class IrcBot(irc.client.IrcClient):
     @asyncio.coroutine
     def handle_welcome(self, message):
         for c in self.starting_channels:
-            self.send_message(irc.commands.Join(c))
+            self.send_message(irc.messages.Join(c))
 
     def add_command_handler(self, command, f):
         self.command_handlers[command] = f

@@ -91,10 +91,10 @@ def split_message(raw):
     prefix = str(prefix, 'utf-8') if prefix else None
     command = str(command, 'utf-8')
     params = [str(p, 'utf-8') for p in params]
-    return Message(command, params, prefix=prefix)
+    return RawMessage(command, params, prefix=prefix)
 
 
-class Message:
+class RawMessage:
     def __init__(self, command, params, prefix=None):
         if not command:
             raise ValueError

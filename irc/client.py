@@ -5,7 +5,7 @@ import asyncio.queues
 import inspect
 import irc.protocol
 import irc.parser
-import irc.commands
+import irc.messages
 import irc.codes
 
 IRC_LOG = logging.getLogger('irc')
@@ -70,9 +70,9 @@ class IrcClient:
     def _register(self):
         IRC_LOG.debug('Registering')
         if self.password:
-            self.send_message(irc.commands.Pass(self.password))
+            self.send_message(irc.messages.Pass(self.password))
         self.send_nick(self.attempted_nick)
-        self.send_message(irc.commands.User(self.attempted_nick, self.attempted_nick, 'tulip-irc', self.attempted_nick))
+        self.send_message(irc.messages.User(self.attempted_nick, self.attempted_nick, 'tulip-irc', self.attempted_nick))
 
     @asyncio.coroutine
     def _read_loop(self, protocol):
@@ -123,7 +123,7 @@ class IrcClient:
     def handle_message(self, message):
         # handle irc protocol commands
         if message.command == 'PING':
-            self.send_message(irc.commands.Pong(message.params))
+            self.send_message(irc.messages.Pong(message.params))
         # TODO: check for race condition
         elif message.command == irc.codes.RPL_WELCOME:
             self.registered = True
@@ -142,10 +142,10 @@ class IrcClient:
 
     def send_nick(self, nick):
         self.attempted_nick = nick
-        self.send_message(irc.commands.Nick(nick))
+        self.send_message(irc.messages.Nick(nick))
 
     def send_privmsg(self, target, message):
-        self.send_message(irc.commands.PrivMsg(target, message))
+        self.send_message(irc.messages.PrivMsg(target, message))
 
     def send_message(self, message):
         self.log_message(message, sending=True)
