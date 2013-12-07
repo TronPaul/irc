@@ -46,7 +46,7 @@ class IrcClient:
         self.hostname = hostname or host
 
         self._loop = loop or asyncio.get_event_loop()
-        self._send_queue = asyncio.queues.Queue(loop=self._loop)
+        self._send_queue = asyncio.queues.Queue(loop=self.loop)
         self.throttle = throttle
 
         self.message_log = message_log
@@ -63,12 +63,12 @@ class IrcClient:
         self._transport, protocol = yield from conn_task
         IRC_LOG.debug('Connected')
         self._register()
-        self._read_handler = asyncio.async(self._read_loop(protocol), loop=self._loop)
-        self._send_handler = asyncio.async(self._send_loop(), loop=self._loop)
+        self._read_handler = asyncio.async(self._read_loop(protocol), loop=self.loop)
+        self._send_handler = asyncio.async(self._send_loop(), loop=self.loop)
 
     def _connect(self):
-        conn = _connect(self.host, self.port, self.ssl, self._loop)
-        conn_task = asyncio.async(conn, loop=self._loop)
+        conn = _connect(self.host, self.port, self.ssl, self.loop)
+        conn_task = asyncio.async(conn, loop=self.loop)
         return conn_task
 
     def _register(self):
@@ -97,14 +97,14 @@ class IrcClient:
 
     @asyncio.coroutine
     def _send_loop(self):
-        next_send = self._loop.time() if self.throttle else None
+        next_send = self.loop.time() if self.throttle else None
         while True:
             raw = yield from self._send_queue.get()
-            if next_send and next_send > self._loop.time():
-                yield from asyncio.sleep(next_send - self._loop.time(), loop=self._loop)
+            if next_send and next_send > self.loop.time():
+                yield from asyncio.sleep(next_send - self.loop.time(), loop=self.loop)
             self._transport.write(raw)
             if self.throttle:
-                next_send = self._loop.time() + self.throttle
+                next_send = self.loop.time() + self.throttle
 
     def log_message(self, message, sending=False):
         direction = 'SEND' if sending else 'RECV'
@@ -142,7 +142,7 @@ class IrcClient:
             raise irc.codes.PasswordMismatchError
 
         handlers = self.irc_handlers.get(message.command, [])
-        [asyncio.Task(h(self, message), loop=self._loop) for h in handlers]
+        [asyncio.Task(h(self, message), loop=self.loop) for h in handlers]
 
     def send_nick(self, nick):
         self.attempted_nick = nick
