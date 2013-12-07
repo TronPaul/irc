@@ -1,7 +1,7 @@
-import irc.protocol as protocol
+import irc.protocol
 
 
-class Message(protocol.RawMessage):
+class Message(irc.protocol.RawMessage):
     def __init__(self, params, command=None, prefix=None):
         if command is None:
             command = self.__class__.__name__.upper()

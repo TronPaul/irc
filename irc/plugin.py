@@ -1,7 +1,6 @@
 import inspect
 import importlib
 import irc.command
-import asyncio.tasks
 
 
 class PluginLoadError(Exception):
