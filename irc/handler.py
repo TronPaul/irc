@@ -4,7 +4,8 @@ import inspect
 
 
 class Command:
-    def __init__(self, command, target, params):
+    def __init__(self, sender, command, target, params):
+        self.sender = sender
         self.command = command
         self.target = target
         self.params = params
@@ -12,6 +13,10 @@ class Command:
     @property
     def params_string(self):
         return ' '.join(self.params)
+
+    def reply(self, bot, message):
+        dest = bot.destination(self)
+        bot.send_privmsg(dest, message)
 
 
 def is_handler(f):

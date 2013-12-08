@@ -15,14 +15,19 @@ class IrcBot(irc.client.IrcClient):
 
         self.add_handler('PRIVMSG', handle_privmsg)
         self.add_handler(irc.codes.RPL_WELCOME, handle_welcome)
-        self.add_command_handler('load', handle_load)
+        self.load_plugin('admin', '/home/tron/dev/irc-env/irc/irc/plugins/admin.py')
 
         self.starting_channels = ['#testbotz']
 
     def valid_command(self, message):
-        target = message.params[0]
         msg = message.params[1]
-        return target != self.nick and msg.startswith(self.command_prefix)
+        return msg.startswith(self.command_prefix)
+
+    def destination(self, command):
+        if command.target == self.nick:
+            return command.sender
+        else:
+            return command.target
 
     def unload_plugin(self, plugin):
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
@@ -70,20 +75,13 @@ def handle_welcome(bot, _):
 @irc.handler.message_handler
 def handle_privmsg(bot, message):
     if bot.valid_command(message):
+        sender = message.nick
         target = message.params[0]
         msg = message.params[1]
         cmd, msg = msg[1:].split(' ', 1)
         params = msg.split(' ')
 
-        command = irc.handler.Command(cmd, target, params)
+        command = irc.handler.Command(sender, cmd, target, params)
 
         if cmd in bot.command_handlers:
             asyncio.Task(bot.command_handlers[cmd](bot, command), loop=bot.loop)
-
-
-@irc.handler.command_handler
-def handle_load(bot, command):
-    if len(command.params) != 2:
-        raise Exception
-    name, path = command.params
-    bot.load_plugin(name, path)
