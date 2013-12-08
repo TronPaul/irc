@@ -1,6 +1,6 @@
 import inspect
 import importlib
-import irc.command
+import irc.handler
 
 
 class PluginLoadError(Exception):
@@ -11,8 +11,8 @@ def get_handler_dict(name, path):
     try:
         module = reload_module(name, path)
         Plugin = get_plugin(module)
-        handlers = get_handlers(Plugin)
-        return {h.__name__: h for h in handlers}
+        handler_types = get_handlers(Plugin)
+        return [{h.__name__: h for h in handlers} for handlers in handler_types]
     except:
         raise PluginLoadError
 
@@ -31,9 +31,12 @@ def get_plugin(module):
 
 
 def get_handlers(plugin):
-    handlers = []
+    cmd_handlers = []
+    msg_handlers = []
     for attr_name in dir(plugin):
         attr = getattr(plugin, attr_name)
-        if irc.command.is_command_handler(attr):
-            handlers.append(attr)
-    return handlers
+        if irc.handler.is_command_handler(attr):
+            cmd_handlers.append(attr)
+        elif irc.handler.is_message_handler(attr):
+            msg_handlers.append(attr)
+    return cmd_handlers, msg_handlers

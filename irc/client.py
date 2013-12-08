@@ -7,6 +7,7 @@ import irc.protocol
 import irc.parser
 import irc.messages
 import irc.codes
+import irc.handler
 
 IRC_LOG = logging.getLogger('irc')
 MESSAGE_LOG = logging.getLogger('irc.message')
@@ -51,7 +52,7 @@ class IrcClient:
 
         self.message_log = message_log
         self.message_log_format = message_log_format
-        self.irc_handlers = {}
+        self.msg_handlers = {}
 
     @property
     def loop(self):
@@ -113,15 +114,16 @@ class IrcClient:
 
     def handles(self, irc_command):
         def decorator(f):
+            f = irc.handler.message_handler(f)
             self.add_handler(irc_command, f)
             return f
 
         return decorator
 
     def add_handler(self, irc_command, f):
-        if irc_command not in self.irc_handlers:
-            self.irc_handlers[irc_command] = []
-        self.irc_handlers[irc_command].append(f)
+        if irc_command not in self.msg_handlers:
+            self.msg_handlers[irc_command] = []
+        self.msg_handlers[irc_command].append(f)
 
     @asyncio.coroutine
     def handle_message(self, message):
@@ -141,7 +143,7 @@ class IrcClient:
         elif message.command == irc.codes.ERR_PASSWDMISMATCH:
             raise irc.codes.PasswordMismatchError
 
-        handlers = self.irc_handlers.get(message.command, [])
+        handlers = self.msg_handlers.get(message.command, [])
         [asyncio.Task(h(self, message), loop=self.loop) for h in handlers]
 
     def send_nick(self, nick):

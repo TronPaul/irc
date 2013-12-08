@@ -3,7 +3,7 @@ import irc.client
 import irc.messages
 import irc.codes
 import irc.plugin
-import irc.command
+import irc.handler
 
 
 class IrcBot(irc.client.IrcClient):
@@ -23,15 +23,16 @@ class IrcBot(irc.client.IrcClient):
         return target != self.nick and msg.startswith(self.command_prefix)
 
     def load_plugin(self, name, path):
-        handlers = irc.plugin.get_handler_dict(name, path)
-        self.command_handlers.update(handlers)
+        cmd_handlers, msg_handlers = irc.plugin.get_handler_dict(name, path)
+        self.command_handlers.update(cmd_handlers)
+        self.msg_handlers.update(msg_handlers)
 
     def add_command_handler(self, command, handler):
         self.command_handlers[command] = handler
 
     def handles_command(self, command_name):
         def decorator(f):
-            f = irc.command.command_handler(f)
+            f = irc.handler.command_handler(f)
             self.add_command_handler(command_name, f)
             return f
 
@@ -52,12 +53,12 @@ def handle_privmsg(bot, message):
         cmd, msg = msg[1:].split(' ', 1)
         params = msg.split(' ')
 
-        command = irc.command.Command(cmd, target, params)
+        command = irc.handler.Command(cmd, target, params)
 
         if cmd in bot.command_handlers:
             asyncio.Task(bot.command_handlers[cmd](bot, command), loop=bot.loop)
 
-@irc.command.command_handler
+@irc.handler.command_handler
 def handle_load(bot, command):
     if len(command.params) != 2:
         raise Exception
