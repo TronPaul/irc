@@ -1,4 +1,4 @@
-import importlib
+import importlib.machinery
 import irc.handler
 
 
@@ -11,8 +11,9 @@ class BasePlugin:
         pass
 
 
+
 def load_module(name, path):
-    loader = importlib.find_loader(name, path)
+    loader = importlib.machinery.SourceFileLoader(name, path)
     if not loader:
         raise ImportError
     return loader.load_module()

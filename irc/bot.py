@@ -27,12 +27,14 @@ class IrcBot(irc.client.IrcClient):
     def load_plugin(self, name, path):
         plugin_class = irc.plugins.get_plugin(name, path)
         plugin = plugin_class(self)
+        # TODO unload previous plugin if exists
         self.plugins[plugin_class.__name__] = plugin
+
 
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
 
-        for irc_command, handler in msg_handlers:
-            self.add_handler(irc_command, handler)
+        for irc_command, handler in msg_handlers.items():
+            self.add_handler(irc_command.upper(), handler)
 
         self.command_handlers.update(cmd_handlers)
 
