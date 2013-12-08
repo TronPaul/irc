@@ -37,6 +37,7 @@ class IrcBot(irc.client.IrcClient):
     def load_plugin(self, name, path):
         plugin_class = irc.plugins.get_plugin(name, path)
         plugin = plugin_class(self)
+        # TODO reinit plugins dependent on plugin_class
         if plugin_class.__name__ in self.plugins:
             self.unload_plugin(self.plugins[plugin_class.__name__])
         self.plugins[plugin_class.__name__] = plugin

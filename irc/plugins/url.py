@@ -28,7 +28,7 @@ def handle_url(bot, target, url):
 
 class BaseUrlHandlerPlugin:
     def __init__(self, bot):
-        if UrlPlugin not in bot.plugins:
+        if UrlPlugin.__name__ not in bot.plugins:
             raise Exception
         bot.plugins[UrlPlugin.__name__].add_handler(self)
 
