@@ -129,14 +129,14 @@ class IrcClient:
     def handle_message(self, message):
         # handle irc protocol commands
         if message.command == 'PING':
-            self.send_message(irc.messages.Pong(message.params))
+            yield from self.send_message(irc.messages.Pong(message.params))
         # TODO: check for race condition
         elif message.command == irc.codes.RPL_WELCOME:
             self.registered = True
             self.nick = self.attempted_nick
             self.attempted_nick = None
         elif message.command in [irc.codes.ERR_NICKNAMEINUSE, irc.codes.ERR_ERRONEUSNICKNAME]:
-            self.send_nick(self.attempted_nick + '_')
+            yield from self.send_nick(self.attempted_nick + '_')
         elif message.command == 'NICK' and message.nick == self.nick:
             self.nick = message.params[0]
             self.attempted_nick = None
