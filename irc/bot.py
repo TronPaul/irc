@@ -2,7 +2,7 @@ import asyncio
 import irc.client
 import irc.messages
 import irc.codes
-import irc.plugin
+import irc.plugins
 import irc.handler
 
 
@@ -11,6 +11,8 @@ class IrcBot(irc.client.IrcClient):
         super().__init__(*args, **kwargs)
         self.command_prefix = ';'
         self.command_handlers = {}
+        self.plugins = {}
+
         self.add_handler('PRIVMSG', handle_privmsg)
         self.add_handler(irc.codes.RPL_WELCOME, handle_welcome)
         self.add_command_handler('load', handle_load)
@@ -23,9 +25,16 @@ class IrcBot(irc.client.IrcClient):
         return target != self.nick and msg.startswith(self.command_prefix)
 
     def load_plugin(self, name, path):
-        cmd_handlers, msg_handlers = irc.plugin.get_handler_dict(name, path)
+        plugin_class = irc.plugins.get_plugin(name, path)
+        plugin = plugin_class(self)
+        self.plugins[plugin_class.__name__] = plugin
+
+        cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
+
+        for irc_command, handler in msg_handlers:
+            self.add_handler(irc_command, handler)
+
         self.command_handlers.update(cmd_handlers)
-        self.msg_handlers.update(msg_handlers)
 
     def add_command_handler(self, command, handler):
         self.command_handlers[command] = handler
@@ -39,13 +48,13 @@ class IrcBot(irc.client.IrcClient):
         return decorator
 
 
-@asyncio.coroutine
+@irc.handler.message_handler
 def handle_welcome(bot, _):
     for c in bot.starting_channels:
         bot.send_message(irc.messages.Join(c))
 
 
-@asyncio.coroutine
+@irc.handler.message_handler
 def handle_privmsg(bot, message):
     if bot.valid_command(message):
         target = message.params[0]
@@ -57,6 +66,7 @@ def handle_privmsg(bot, message):
 
         if cmd in bot.command_handlers:
             asyncio.Task(bot.command_handlers[cmd](bot, command), loop=bot.loop)
+
 
 @irc.handler.command_handler
 def handle_load(bot, command):
