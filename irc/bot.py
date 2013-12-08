@@ -24,12 +24,22 @@ class IrcBot(irc.client.IrcClient):
         msg = message.params[1]
         return target != self.nick and msg.startswith(self.command_prefix)
 
+    def unload_plugin(self, plugin):
+        cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
+
+        for irc_command, handler in msg_handlers.items():
+            handlers = self.msg_handlers[irc_command.upper()]
+            handlers.remove(handler)
+
+        for cmd in cmd_handlers.keys():
+            del self.command_handlers[cmd]
+
     def load_plugin(self, name, path):
         plugin_class = irc.plugins.get_plugin(name, path)
         plugin = plugin_class(self)
-        # TODO unload previous plugin if exists
+        if plugin_class.__name__ in self.plugins:
+            self.unload_plugin(self.plugins[plugin_class.__name__])
         self.plugins[plugin_class.__name__] = plugin
-
 
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
 
