@@ -11,7 +11,6 @@ class BasePlugin:
         pass
 
 
-
 def load_module(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
     if not loader:

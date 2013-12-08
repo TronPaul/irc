@@ -148,14 +148,14 @@ class IrcClient:
 
     def send_nick(self, nick):
         self.attempted_nick = nick
-        self.send_message(irc.messages.Nick(nick))
+        return self.send_message(irc.messages.Nick(nick))
 
     def send_privmsg(self, target, message):
-        self.send_message(irc.messages.PrivMsg(target, message))
+        return self.send_message(irc.messages.PrivMsg(target, message))
 
     def send_message(self, message):
         self.log_message(message, sending=True)
-        self.send_raw(message.encode())
+        return self.send_raw(message.encode())
 
     def send_raw(self, raw):
         return asyncio.Task(self._send_queue.put(raw), loop=self.loop)
