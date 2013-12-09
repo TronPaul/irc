@@ -20,6 +20,14 @@ class User(Message):
         super().__init__(params, prefix=prefix)
 
 
+class Part(Message):
+    def __init__(self, channel, password=None):
+        params = [channel]
+        if password:
+            params.append(password)
+        super().__init__(params)
+
+
 class Join(Message):
     def __init__(self, channel, password=None):
         params = [channel]
@@ -36,6 +44,11 @@ class Ping(Message):
 class Pong(Message):
     def __init__(self, params, prefix=None):
         super().__init__(params, prefix=prefix)
+
+
+class Quit(Message):
+    def __init__(self, prefix=None):
+        super().__init__([], prefix=prefix)
 
 
 class Pass(Message):

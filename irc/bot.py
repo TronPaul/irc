@@ -31,7 +31,8 @@ class IrcBot(irc.client.IrcClient):
         else:
             return command.target
 
-    def unload_plugin(self, plugin):
+    def unload_plugin(self, plugin_name):
+        plugin = self.plugins[plugin_name]
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
 
         for irc_command, handler in msg_handlers.items():
@@ -46,7 +47,7 @@ class IrcBot(irc.client.IrcClient):
         plugin = plugin_class(self)
         # TODO reinit plugins dependent on plugin_class
         if plugin_class.__name__ in self.plugins:
-            self.unload_plugin(self.plugins[plugin_class.__name__])
+            self.unload_plugin(plugin_class.__name__)
         self.plugins[plugin_class.__name__] = plugin
 
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
@@ -80,8 +81,11 @@ def handle_privmsg(bot, message):
         sender = message.nick
         target = message.params[0]
         msg = message.params[1]
-        cmd, msg = msg[1:].split(' ', 1)
-        params = msg.split(' ')
+        if ' ' in msg:
+            cmd, msg = msg[1:].split(' ', 1)
+            params = msg.split(' ')
+        else:
+            cmd, msg, params = msg[1:], '', []
 
         command = irc.handler.Command(sender, cmd, target, params)
 

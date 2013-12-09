@@ -146,6 +146,11 @@ class IrcClient:
         handlers = self.msg_handlers.get(message.command, [])
         [asyncio.Task(h(self, message), loop=self.loop) for h in handlers]
 
+    def quit(self):
+        fut = self.send_message(irc.messages.Quit())
+        fut.add_done_callback(lambda x: self._read_handler.cancel)
+        fut.add_done_callback(lambda x: self._send_handler.cancel)
+
     def send_nick(self, nick):
         self.attempted_nick = nick
         return self.send_message(irc.messages.Nick(nick))
@@ -158,4 +163,4 @@ class IrcClient:
         return self.send_raw(message.encode())
 
     def send_raw(self, raw):
-        return asyncio.Task(self._send_queue.put(raw), loop=self.loop)
+        return asyncio.async(self._send_queue.put(raw), loop=self.loop)

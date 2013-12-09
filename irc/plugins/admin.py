@@ -1,6 +1,7 @@
 import irc.handler
 import irc.plugins
 import functools
+import irc.messages
 
 
 def admin_command(f):
@@ -28,23 +29,32 @@ class AdminPlugin(irc.plugins.BasePlugin):
 
     @admin_command
     def unload(self, bot, command):
-        pass
+        if len(command.params) != 1:
+            raise Exception
+        plugin_name = command.params[0]
+        bot.unload_plugin(plugin_name)
 
     @admin_command
     def part(self, bot, command):
-        pass
+        if len(command.params) != 1:
+            raise Exception
+        channel = command.params[0]
+        bot.send_message(irc.messages.Part(channel))
 
     @admin_command
     def join(self, bot, command):
-        pass
+        if len(command.params) != 1:
+            raise Exception
+        channel = command.params[0]
+        bot.send_message(irc.messages.Join(channel))
 
     @admin_command
     def quit(self, bot, command):
-        pass
+        bot.quit()
 
     @admin_command
     def raw(self, bot, command):
-        pass
+        bot.send_raw(command.params_string)
 
 
 Plugin = AdminPlugin
