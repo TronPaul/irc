@@ -15,9 +15,11 @@ class IrcBot(irc.client.IrcClient):
 
         self.add_handler('PRIVMSG', handle_privmsg)
         self.add_handler(irc.codes.RPL_WELCOME, handle_welcome)
+        # TODO configure which builtin plugins to load
         self.load_plugin('admin', '/home/tron/dev/irc-env/irc/irc/plugins/admin.py')
 
         self.starting_channels = ['#testbotz']
+        self.owner = kwargs.get('owner')
 
     def valid_command(self, message):
         msg = message.params[1]

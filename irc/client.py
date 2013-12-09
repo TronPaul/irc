@@ -32,10 +32,10 @@ class IrcClient:
     _read_handler = None
     _send_handler = None
 
-    def __init__(self, host, nick, ssl=False, port=6667, username=None,
+    def __init__(self, host, nick, *args, ssl=False, port=6667, username=None,
                  realname=None, hostname=None, password=None, throttle=None,
                  loop=None, message_log=MESSAGE_LOG,
-                 message_log_format=MESSAGE_LOG_FORMAT):
+                 message_log_format=MESSAGE_LOG_FORMAT, **kwargs):
         self.host = host
         self.port = port
         self.ssl = ssl

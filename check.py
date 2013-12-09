@@ -7,7 +7,7 @@ l.setLevel(logging.DEBUG)
 h = logging.StreamHandler()
 h.setLevel(logging.DEBUG)
 l.addHandler(h)
-bot = IrcBot('irc.geeksirc.net', 'TulipBot')
+bot = IrcBot('irc.geeksirc.net', 'TulipBot', owner='TronPaul')
 
 @bot.handles_command('echo')
 @asyncio.coroutine
