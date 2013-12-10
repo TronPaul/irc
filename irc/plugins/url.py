@@ -28,6 +28,8 @@ def handle_url(bot, target, url):
 
 
 class BaseUrlHandlerPlugin(irc.plugins.BasePlugin):
+    dependencies = [UrlPlugin]
+
     def __init__(self, bot):
         super().__init__(bot)
         bot.plugins[UrlPlugin.__name__].add_handler(self)
