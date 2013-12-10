@@ -1,3 +1,4 @@
+import types
 import logging
 import functools
 import asyncio
@@ -163,4 +164,5 @@ class IrcClient:
         return self.send_raw(message.encode())
 
     def send_raw(self, raw):
+        assert type(raw) == bytes
         return asyncio.async(self._send_queue.put(raw), loop=self.loop)

@@ -33,6 +33,7 @@ class IrcBot(irc.client.IrcClient):
             return command.target
 
     def unload_plugin(self, plugin_name):
+        # TODO unload plugins dependent on plugin_name
         plugin = self.plugins[plugin_name]
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
 
