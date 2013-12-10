@@ -20,6 +20,7 @@ class IrcBot(irc.client.IrcClient):
 
         self.starting_channels = ['#testbotz']
         self.owner = kwargs.get('owner')
+        self.config = kwargs.get('config', {})
 
     def valid_command(self, message):
         msg = message.params[1]

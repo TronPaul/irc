@@ -54,7 +54,8 @@ class AdminPlugin(irc.plugins.BasePlugin):
 
     @admin_command
     def raw(self, bot, command):
-        bot.send_raw(command.params_string)
+        print('raw: ' + command.params_string)
+        bot.send_raw(bytes(command.params_string + '\r\n', encoding='utf8'))
 
 
 Plugin = AdminPlugin

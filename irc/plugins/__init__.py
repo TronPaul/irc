@@ -7,8 +7,14 @@ class PluginLoadError(Exception):
 
 
 class BasePlugin:
+    dependencies = []
+
     def __init__(self, bot):
-        pass
+        if not self.check_dependencies(bot):
+            raise PluginLoadError
+
+    def check_dependencies(self, bot):
+        return all([dep in bot.plugins for dep in self.dependencies])
 
 
 def load_module(name, path):

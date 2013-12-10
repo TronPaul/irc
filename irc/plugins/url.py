@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import re
 import irc.handler
+import irc.plugins
 
 URL_PATTERN = re.compile(r'https?://.*?\s?$')
 TITLE_PATTERN = re.compile(r'<title[^>]*>(?P<title>.*?)</title[^>]*>')
@@ -26,16 +27,15 @@ def handle_url(bot, target, url):
         bot.send_privmsg(target, TITLE_MESSAGE.format(host=resp.host, url=resp.url, title=title))
 
 
-class BaseUrlHandlerPlugin:
+class BaseUrlHandlerPlugin(irc.plugins.BasePlugin):
     def __init__(self, bot):
-        if UrlPlugin.__name__ not in bot.plugins:
-            raise Exception
+        super().__init__(bot)
         bot.plugins[UrlPlugin.__name__].add_handler(self)
 
     def match(self, url):
         raise NotImplementedError
 
-    def handle(self, bot, target, url):
+    def handle(self, bot, target, match):
         raise NotImplementedError
 
 
@@ -56,9 +56,9 @@ class UrlPlugin:
         if url_match:
             url = url_match.group()
             for h in self.url_handlers:
-                m = h.match(url_match)
+                m = h.match(url)
                 if m:
-                    h.handle(bot, target, m)
+                    yield from h.handle(bot, target, m)
                     break
             else:
                 yield from handle_url(bot, target, url)
