@@ -14,7 +14,7 @@ class BasePlugin:
             raise PluginLoadError
 
     def check_dependencies(self, bot):
-        return all([dep in bot.plugins for dep in self.dependencies])
+        return all([dep.__name__ in bot.plugins for dep in self.dependencies])
 
 
 def load_module(name, path):

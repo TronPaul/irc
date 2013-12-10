@@ -19,7 +19,6 @@ class ImgurPlugin(irc.plugins.url.BaseUrlHandlerPlugin):
         match = IMGUR_PATTERN.match(url)
         return match
 
-    @asyncio.coroutine
     def handle(self, bot, target, match):
         groups = match.groupdict()
         if groups['comment_id']:
@@ -32,12 +31,10 @@ class ImgurPlugin(irc.plugins.url.BaseUrlHandlerPlugin):
             elif groups['type'] == 'gallery':
                 yield from self.gallery(bot, target, groups['id'], bot.loop)
 
-    @asyncio.coroutine
     def comment(self, bot, target, id, loop):
         d = yield from self.imgur_data('comment', id, loop)
         bot.send_privmsg(target, 'imgur comment: \02<{author}>\02 {comment}'.format(**d))
 
-    @asyncio.coroutine
     def image(self, bot, target, id, loop):
         print('image')
         d = yield from self.imgur_data('image', id, loop)
@@ -46,13 +43,11 @@ class ImgurPlugin(irc.plugins.url.BaseUrlHandlerPlugin):
         print('sending')
         bot.send_privmsg(target, 'imgur: \02{title}\02 - {width}x{height} {type}{animated}'.format(**d))
 
-    @asyncio.coroutine
     def album(self, bot, target, id, loop):
         d = yield from self.imgur_data('album', id, loop)
         d['title'] = d.get('title', 'No Title')
         bot.send_privmsg(target, 'imgur: \02{title}\02 - {images_count} images'.format(**d))
 
-    @asyncio.coroutine
     def gallery(self, bot, target, id, loop):
         d = yield from self.imgur_data('gallery', id, loop)
         d['title'] = d.get('title', 'No Title')
@@ -62,7 +57,6 @@ class ImgurPlugin(irc.plugins.url.BaseUrlHandlerPlugin):
             d['animated'] = ' animated' if 'animated' in d else ''
             bot.send_privmsg(target, 'imgur: \02{title}\02 - {width}x{height} {type}{animated}'.format(**d))
 
-    @asyncio.coroutine
     def imgur_data(self, type, id, loop):
         url = r'https://api.imgur.com/3/{0}/{1}.json'.format(type, id)
         headers = {'Authorization': 'Client-ID {0}'.format(self.client_id)}
