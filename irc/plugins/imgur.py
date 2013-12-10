@@ -23,24 +23,24 @@ class ImgurPlugin(irc.plugins.url.BaseUrlHandlerPlugin):
     def handle(self, bot, target, match):
         groups = match.groupdict()
         if groups['comment_id']:
-            yield from comment(bot, target, groups['comment_id'], bot.loop)
+            yield from self.comment(bot, target, groups['comment_id'], bot.loop)
         else:
             if not groups['type']:
-                yield from image(bot, target, groups['id'], bot.loop)
+                yield from self.image(bot, target, groups['id'], bot.loop)
             elif groups['type'] == 'a':
-                yield from album(bot, target, groups['id'], bot.loop)
+                yield from self.album(bot, target, groups['id'], bot.loop)
             elif groups['type'] == 'gallery':
-                yield from gallery(bot, target, groups['id'], bot.loop)
+                yield from self.gallery(bot, target, groups['id'], bot.loop)
 
     @asyncio.coroutine
     def comment(self, bot, target, id, loop):
-        d = yield from imgur_data('comment', id, loop)
+        d = yield from self.imgur_data('comment', id, loop)
         bot.send_privmsg(target, 'imgur comment: \02<{author}>\02 {comment}'.format(**d))
 
     @asyncio.coroutine
     def image(self, bot, target, id, loop):
         print('image')
-        d = yield from imgur_data('image', id, loop)
+        d = yield from self.imgur_data('image', id, loop)
         d['title'] = d.get('title', 'No Title')
         d['animated'] = ' animated' if 'animated' in d else ''
         print('sending')
@@ -48,13 +48,13 @@ class ImgurPlugin(irc.plugins.url.BaseUrlHandlerPlugin):
 
     @asyncio.coroutine
     def album(self, bot, target, id, loop):
-        d = yield from imgur_data('album', id, loop)
+        d = yield from self.imgur_data('album', id, loop)
         d['title'] = d.get('title', 'No Title')
         bot.send_privmsg(target, 'imgur: \02{title}\02 - {images_count} images'.format(**d))
 
     @asyncio.coroutine
     def gallery(self, bot, target, id, loop):
-        d = yield from imgur_data('gallery', id, loop)
+        d = yield from self.imgur_data('gallery', id, loop)
         d['title'] = d.get('title', 'No Title')
         if d['is_album']:
             bot.send_privmsg(target, 'imgur: \02{title}\02 - {images_count} images'.format(**d))
