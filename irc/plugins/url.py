@@ -15,7 +15,6 @@ def get_url(s):
 TITLE_MESSAGE = '\02Title on {host}{url}:\02 {title}'
 
 
-@asyncio.coroutine
 def handle_url(bot, target, url):
     resp = yield from aiohttp.request('GET', url, loop=bot.loop)
     # TODO don't read the whole response
@@ -25,20 +24,6 @@ def handle_url(bot, target, url):
         title = title_match.group(1)
         # TODO check for redirect
         bot.send_privmsg(target, TITLE_MESSAGE.format(host=resp.host, url=resp.url, title=title))
-
-
-class BaseUrlHandlerPlugin(irc.plugins.BasePlugin):
-    dependencies = [UrlPlugin]
-
-    def __init__(self, bot):
-        super().__init__(bot)
-        bot.plugins[UrlPlugin.__name__].add_handler(self)
-
-    def match(self, url):
-        raise NotImplementedError
-
-    def handle(self, bot, target, match):
-        raise NotImplementedError
 
 
 class UrlPlugin:
@@ -64,5 +49,20 @@ class UrlPlugin:
                     break
             else:
                 yield from handle_url(bot, target, url)
+
+
+class BaseUrlHandlerPlugin(irc.plugins.BasePlugin):
+    dependencies = [UrlPlugin]
+
+    def __init__(self, bot):
+        super().__init__(bot)
+        bot.plugins[UrlPlugin.__name__].add_handler(self)
+
+    def match(self, url):
+        raise NotImplementedError
+
+    def handle(self, bot, target, match):
+        raise NotImplementedError
+
 
 Plugin = UrlPlugin
