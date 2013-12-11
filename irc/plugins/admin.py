@@ -9,7 +9,7 @@ def admin_command(f):
     @functools.wraps(f)
     def wrapper(self, bot, command, *args, **kwargs):
         if not is_admin(bot, command.sender):
-            command.reply(bot, '{0} does not have permission for {1}'.format(command.sender, 'load'))
+            command.reply(bot, '{0} does not have permission for {1}'.format(command.sender, command.command))
             raise PermissionError
         return f(self, bot, command, *args, **kwargs)
     return wrapper
