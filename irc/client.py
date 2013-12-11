@@ -15,6 +15,7 @@ MESSAGE_LOG = logging.getLogger('irc.message')
 MESSAGE_LOG_FORMAT = '{dir} Message: {message}'
 
 
+# TODO add connection timeout RE: Gamesurge
 @asyncio.coroutine
 def _connect(host, port, ssl, loop):
     IRC_LOG.debug('Connecting...')
