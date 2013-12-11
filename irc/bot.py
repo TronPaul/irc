@@ -12,6 +12,7 @@ class IrcBot(irc.client.IrcClient):
         self.command_prefix = ';'
         self.command_handlers = {}
         self.plugins = {}
+        self.plugin_infos = {}
 
         self.add_handler('PRIVMSG', handle_privmsg)
         self.add_handler(irc.codes.RPL_WELCOME, handle_welcome)
@@ -33,8 +34,9 @@ class IrcBot(irc.client.IrcClient):
             return command.target
 
     def unload_plugin(self, plugin_name):
-        # TODO unload plugins dependent on plugin_name
-        plugin = self.plugins[plugin_name]
+        # TODO decide if need to unload module
+        [self.unload_plugin(pn) for pn, p in self.plugins.items() if plugin_name in p.dependencies]
+        plugin = self.plugins.pop(plugin_name)
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
 
         for irc_command, handler in msg_handlers.items():
@@ -46,11 +48,15 @@ class IrcBot(irc.client.IrcClient):
 
     def load_plugin(self, name, path):
         plugin_class = irc.plugins.get_plugin(name, path)
+        p_class_name = plugin_class.__name__
+        self.plugin_infos[p_class_name] = (name, path)
         plugin = plugin_class(self)
-        # TODO reinit plugins dependent on plugin_class
-        if plugin_class.__name__ in self.plugins:
-            self.unload_plugin(plugin_class.__name__)
-        self.plugins[plugin_class.__name__] = plugin
+        plugins_to_reload = []
+        if p_class_name in self.plugins:
+            plugins_to_reload = [pn for pn, p in self.plugins.items() if p_class_name in p.dependencies]
+            [self.unload_plugin(pn) for pn in plugins_to_reload]
+            self.unload_plugin(p_class_name)
+        self.plugins[p_class_name] = plugin
 
         cmd_handlers, msg_handlers = irc.plugins.get_handlers(plugin)
 
@@ -58,6 +64,7 @@ class IrcBot(irc.client.IrcClient):
             self.add_handler(irc_command.upper(), handler)
 
         self.command_handlers.update(cmd_handlers)
+        [self.load_plugin(*self.plugin_infos[pn]) for pn in plugins_to_reload]
 
     def add_command_handler(self, command, handler):
         self.command_handlers[command] = handler

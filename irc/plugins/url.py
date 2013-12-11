@@ -26,8 +26,9 @@ def handle_url(bot, target, url):
         bot.send_privmsg(target, TITLE_MESSAGE.format(host=resp.host, url=resp.url, title=title))
 
 
-class UrlPlugin:
-    def __init__(self, *args):
+class UrlPlugin(irc.plugins.BasePlugin):
+    def __init__(self, bot):
+        super().__init__(bot)
         self.url_handlers = []
 
     def add_handler(self, url_handler):
