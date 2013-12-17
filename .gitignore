@@ -47,3 +47,5 @@ coverage.xml
 docs/_build/
 
 .idea
+
+coverage-report/
