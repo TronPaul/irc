@@ -150,8 +150,13 @@ class IrcClient:
 
     def quit(self):
         fut = self.send_message(irc.messages.Quit())
-        fut.add_done_callback(lambda x: self._read_handler.cancel)
-        fut.add_done_callback(lambda x: self._send_handler.cancel)
+
+        def cancel(fut):
+            self._read_handler.cancel()
+            self._send_handler.cancel()
+
+        fut.add_done_callback(cancel)
+        return fut
 
     def send_nick(self, nick):
         self.attempted_nick = nick

@@ -6,6 +6,7 @@ import irc.messages
 import irc.protocol
 import irc.parser
 import irc.codes
+import tests.utils
 
 
 class TestClient(unittest.TestCase):
@@ -14,7 +15,8 @@ class TestClient(unittest.TestCase):
         asyncio.set_event_loop(None)
 
         self.transport = unittest.mock.Mock()
-        self.protocol = unittest.mock.Mock()
+        self.protocol = unittest.mock.MagicMock()
+
 
         @asyncio.coroutine
         def gen():
@@ -38,6 +40,19 @@ class TestClient(unittest.TestCase):
         thing = patcher.start()
         self.addCleanup(patcher.stop)
         return thing
+
+    def patch_connect(self, transport=None, protocol=None):
+        if not transport:
+            transport = unittest.mock.Mock()
+        if not protocol:
+            protocol = irc.parser.StreamProtocol(loop=self.loop)
+
+        @asyncio.coroutine
+        def gen(*args):
+            return transport, protocol
+
+        self.create_patch('irc.client._connect', new=gen)
+
 
     def test_register_on_connect(self):
         self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
@@ -139,9 +154,7 @@ class TestClient(unittest.TestCase):
         self.assertEquals(c.attempted_nick, 'TestNick_')
 
     def test_set_nickname_on_matching_nickname(self):
-        self.create_patch('irc.client.IrcClient._connect', **self.connect_mock_config)
         c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
-        c._transport = self.transport
         c.nick = 'PrevNick'
         c.attempted_nick = 'TestNick'
 
@@ -154,3 +167,13 @@ class TestClient(unittest.TestCase):
 
         self.assertEquals(c.nick, 'TestNick')
         self.assertTrue(c.attempted_nick is None)
+
+    def test_quit(self):
+        self.patch_connect()
+        c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
+        start_task = asyncio.Task(c.start(), loop=self.loop)
+        self.loop.run_until_complete(start_task)
+        self.loop.run_until_complete(c.quit())
+        tests.utils.run_briefly(self.loop)
+        self.assertTrue(c._send_handler.cancelled())
+        self.assertTrue(c._read_handler.cancelled())
