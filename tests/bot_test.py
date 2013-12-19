@@ -61,7 +61,7 @@ class TestBot(unittest.TestCase):
         stream.feed_eof()
 
         transport, _ = self.patch_connect(protocol=stream)
-        b = irc.bot.IrcBot('irc.example.com', 'TulipBot', loop=self.loop, config={'starting_channels': ['a', 'b']})
+        b = irc.bot.IrcBot('irc.example.com', 'TulipBot', loop=self.loop, config={'STARTING_CHANNELS': ['a', 'b']})
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
         self.loop.run_until_complete(b._read_handler)
