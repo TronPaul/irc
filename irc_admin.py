@@ -51,19 +51,19 @@ def join(bot, command):
     if len(command.params) != 1:
         raise Exception
     channel = command.params[0]
-    bot.send_message(irc.messages.Join(channel))
+    return bot.send_message(irc.messages.Join(channel))
 
 
 def part(bot, command):
     if len(command.params) != 1:
         raise Exception
     channel = command.params[0]
-    bot.send_message(irc.messages.Part(channel))
+    return bot.send_message(irc.messages.Part(channel))
 
 
 def quit(bot, command):
-    bot.quit()
+    return bot.quit()
 
 
 def raw(bot, command):
-    bot.send_raw(bytes(command.params_string + '\r\n', encoding='utf8'))
+    return bot.send_raw(bytes(command.params_string + '\r\n', encoding='utf8'))

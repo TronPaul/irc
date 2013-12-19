@@ -35,9 +35,11 @@ class TestAdmin(unittest.TestCase):
         return transport, protocol
 
     def test_wrapper_no_permissions(self):
+        global called
         called = False
 
         def func(*args, **kwargs):
+            global called
             called = True
 
         wrapped_func = irc_admin.admin_command_handler(lambda x: False, func)
@@ -62,3 +64,21 @@ class TestAdmin(unittest.TestCase):
         wf_task = asyncio.Task(wrapped_func(b, irc.handler.Command('Nick', 'test', 'target', [])), loop=self.loop)
         self.loop.run_until_complete(wf_task)
         self.assertTrue(called)
+
+    def test_join(self):
+        transport, _ = self.patch_connect()
+        b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        start_task = asyncio.Task(b.start(), loop=self.loop)
+        self.loop.run_until_complete(start_task)
+        join_task = irc_admin.join(b, irc.handler.Command('Nick', 'join', '#chan', ['#newchan']))
+        self.loop.run_until_complete(join_task)
+        self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Join('#newchan').encode()))
+
+    def test_part(self):
+        pass
+
+    def test_quit(self):
+        pass
+
+    def test_raw(self):
+        pass
