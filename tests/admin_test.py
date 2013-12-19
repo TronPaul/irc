@@ -3,6 +3,7 @@ import unittest.mock
 import asyncio
 import irc
 import irc.parser
+import irc.messages
 import irc.handler
 import irc_admin
 
@@ -75,10 +76,22 @@ class TestAdmin(unittest.TestCase):
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Join('#newchan').encode()))
 
     def test_part(self):
-        pass
+        transport, _ = self.patch_connect()
+        b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        start_task = asyncio.Task(b.start(), loop=self.loop)
+        self.loop.run_until_complete(start_task)
+        part_task = irc_admin.part(b, irc.handler.Command('Nick', 'part', '#chan', ['#oldchan']))
+        self.loop.run_until_complete(part_task)
+        self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Part('#oldchan').encode()))
 
     def test_quit(self):
-        pass
+        transport, _ = self.patch_connect()
+        b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        start_task = asyncio.Task(b.start(), loop=self.loop)
+        self.loop.run_until_complete(start_task)
+        quit_task = irc_admin.quit(b, irc.handler.Command('Nick', 'quit', '#chan', []))
+        self.loop.run_until_complete(quit_task)
+        self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Quit().encode()))
 
     def test_raw(self):
         pass
