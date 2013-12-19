@@ -1,4 +1,6 @@
 import asyncio
+import pathlib
+import irc
 import irc.client
 import irc.messages
 import irc.codes
@@ -18,7 +20,8 @@ class IrcBot(irc.client.IrcClient):
         self.add_handler('PRIVMSG', handle_privmsg)
         self.add_handler(irc.codes.RPL_WELCOME, handle_welcome)
         # TODO configure which builtin plugins to load
-        self.load_plugin('admin', '/home/tron/dev/irc-env/irc/irc/plugins/admin.py')
+        path = str(pathlib.Path(irc.__path__[0]).joinpath('plugins/admin.py'))
+        self.load_plugin('admin', path)
 
         self.starting_channels = self.config.get('starting_channels', [])
         self.owner = kwargs.get('owner')
