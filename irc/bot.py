@@ -9,7 +9,8 @@ import irc.handler
 class IrcBot(irc.client.IrcClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.command_prefix = ';'
+        self.config = kwargs.get('config', {})
+        self.command_prefix = self.config.get('command_prefix', ';')
         self.command_handlers = {}
         self.plugins = {}
         self.plugin_infos = {}
@@ -19,9 +20,8 @@ class IrcBot(irc.client.IrcClient):
         # TODO configure which builtin plugins to load
         self.load_plugin('admin', '/home/tron/dev/irc-env/irc/irc/plugins/admin.py')
 
-        self.starting_channels = ['#testbotz']
+        self.starting_channels = self.config.get('starting_channels', [])
         self.owner = kwargs.get('owner')
-        self.config = kwargs.get('config', {})
 
     def valid_command(self, message):
         msg = message.params[1]
