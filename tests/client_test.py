@@ -154,3 +154,12 @@ class TestClient(unittest.TestCase):
         tests.utils.run_briefly(self.loop)
         self.assertTrue(c._send_handler.cancelled())
         self.assertTrue(c._read_handler.cancelled())
+
+    def test_privmsg(self):
+        transport, _ = self.patch_connect()
+        c = irc.client.IrcClient('example.com', 'TestNick', password='testpass', loop=self.loop)
+        start_task = asyncio.Task(c.start(), loop=self.loop)
+        self.loop.run_until_complete(start_task)
+        msg = irc.messages.PrivMsg('test', 'a msg')
+        self.loop.run_until_complete(c.send_privmsg('test', 'a msg'))
+        self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(msg.encode()))
