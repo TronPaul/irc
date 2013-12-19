@@ -66,5 +66,4 @@ def quit(bot, command):
 
 
 def raw(bot, command):
-    print('raw: ' + command.params_string)
     bot.send_raw(bytes(command.params_string + '\r\n', encoding='utf8'))
