@@ -94,4 +94,10 @@ class TestAdmin(unittest.TestCase):
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Quit().encode()))
 
     def test_raw(self):
-        pass
+        transport, _ = self.patch_connect()
+        b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        start_task = asyncio.Task(b.start(), loop=self.loop)
+        self.loop.run_until_complete(start_task)
+        raw_task = irc_admin.raw(b, irc.handler.Command('Nick', 'raw', '#chan', ['PRIVMSG target the string baby']))
+        self.loop.run_until_complete(raw_task)
+        self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(b'PRIVMSG target the string baby\r\n'))
