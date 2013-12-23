@@ -1,10 +1,9 @@
 import unittest
 import unittest.mock
 import asyncio
-import irc
+import irc.bot
 import irc.parser
 import irc.messages
-import irc.handler
 import irc_admin
 
 
@@ -47,7 +46,7 @@ class TestAdmin(unittest.TestCase):
         self.patch_connect()
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
 
-        self.assertRaises(PermissionError, wrapped_func, b, irc.handler.Command('Nick', 'test', 'target', []))
+        self.assertRaises(PermissionError, wrapped_func, b, irc.bot.Command('Nick', 'test', 'target', []))
         self.assertFalse(called)
 
     def test_wrapper_with_permissions(self):
@@ -55,6 +54,7 @@ class TestAdmin(unittest.TestCase):
         global called
         called = False
 
+        @asyncio.coroutine
         def func(*args, **kwargs):
             global called
             called = True
@@ -62,7 +62,7 @@ class TestAdmin(unittest.TestCase):
         wrapped_func = irc_admin.admin_command_handler(lambda x: True, func)
         self.patch_connect()
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
-        wf_task = asyncio.Task(wrapped_func(b, irc.handler.Command('Nick', 'test', 'target', [])), loop=self.loop)
+        wf_task = asyncio.Task(wrapped_func(b, irc.bot.Command('Nick', 'test', 'target', [])), loop=self.loop)
         self.loop.run_until_complete(wf_task)
         self.assertTrue(called)
 
@@ -71,7 +71,7 @@ class TestAdmin(unittest.TestCase):
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        join_task = irc_admin.join(b, irc.handler.Command('Nick', 'join', '#chan', ['#newchan']))
+        join_task = irc_admin.join(b, irc.bot.Command('Nick', 'join', '#chan', ['#newchan']))
         self.loop.run_until_complete(join_task)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Join('#newchan').encode()))
 
@@ -80,7 +80,7 @@ class TestAdmin(unittest.TestCase):
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        part_task = irc_admin.part(b, irc.handler.Command('Nick', 'part', '#chan', ['#oldchan']))
+        part_task = irc_admin.part(b, irc.bot.Command('Nick', 'part', '#chan', ['#oldchan']))
         self.loop.run_until_complete(part_task)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Part('#oldchan').encode()))
 
@@ -89,7 +89,7 @@ class TestAdmin(unittest.TestCase):
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        quit_task = irc_admin.quit(b, irc.handler.Command('Nick', 'quit', '#chan', []))
+        quit_task = irc_admin.quit(b, irc.bot.Command('Nick', 'quit', '#chan', []))
         self.loop.run_until_complete(quit_task)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Quit().encode()))
 
@@ -98,6 +98,6 @@ class TestAdmin(unittest.TestCase):
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        raw_task = irc_admin.raw(b, irc.handler.Command('Nick', 'raw', '#chan', ['PRIVMSG target the string baby']))
+        raw_task = irc_admin.raw(b, irc.bot.Command('Nick', 'raw', '#chan', ['PRIVMSG target the string baby']))
         self.loop.run_until_complete(raw_task)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(b'PRIVMSG target the string baby\r\n'))

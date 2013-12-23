@@ -1,4 +1,3 @@
-import types
 import logging
 import functools
 import asyncio
@@ -8,7 +7,6 @@ import irc.protocol
 import irc.parser
 import irc.messages
 import irc.codes
-import irc.handler
 
 IRC_LOG = logging.getLogger('irc')
 MESSAGE_LOG = logging.getLogger('irc.message')
@@ -116,7 +114,7 @@ class IrcClient:
 
     def handles(self, irc_command):
         def decorator(f):
-            f = irc.handler.message_handler(f)
+            assert asyncio.tasks.iscoroutinefunction(f)
             self.add_handler(irc_command, f)
             return f
 

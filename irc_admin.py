@@ -1,10 +1,9 @@
 import functools
-import irc.handler
+import asyncio
 import irc.messages
 
 
 def admin_command_handler(admin_check, f):
-    f = irc.handler.command_handler(f)
     @functools.wraps(f)
     def wrapper(bot, command, *args, **kwargs):
         if not admin_check(command.sender):
@@ -47,6 +46,7 @@ class Admin:
         return decorator
 
 
+@asyncio.coroutine
 def join(bot, command):
     if len(command.params) != 1:
         raise Exception
@@ -54,6 +54,7 @@ def join(bot, command):
     return bot.send_message(irc.messages.Join(channel))
 
 
+@asyncio.coroutine
 def part(bot, command):
     if len(command.params) != 1:
         raise Exception
@@ -61,9 +62,11 @@ def part(bot, command):
     return bot.send_message(irc.messages.Part(channel))
 
 
+@asyncio.coroutine
 def quit(bot, command):
     return bot.quit()
 
 
+@asyncio.coroutine
 def raw(bot, command):
     return bot.send_raw(bytes(command.params_string + '\r\n', encoding='utf8'))
