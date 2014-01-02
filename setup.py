@@ -8,5 +8,6 @@ setup(
     license='',
     author='Mark McGuire',
     author_email='',
-    description='Irc library using aysncio', requires=['asyncio']
+    description='Irc library using aysncio',
+    requires=['asyncio', 'enum34']
 )
