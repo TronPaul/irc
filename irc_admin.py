@@ -1,6 +1,7 @@
 import functools
 import asyncio
 import irc.messages
+import irc.command
 
 
 def admin_command_handler(admin_check, f):
@@ -23,10 +24,10 @@ class Admin:
     def init_bot(self, bot):
         bot.config.setdefault('OWNER', None)
         self.bot = bot
-        self.handles_admin_command('join')(join)
-        self.handles_admin_command('part')(part)
+        self.handles_admin_command('join', ['channel'])(join)
+        self.handles_admin_command('part', ['channel'])(part)
         self.handles_admin_command('quit')(quit)
-        self.handles_admin_command('raw')(raw)
+        self.handles_admin_command('raw', ['raw_string'], irc.command.LastParamType.string)(raw)
 
     @property
     def owner(self):
@@ -38,10 +39,10 @@ class Admin:
     def is_admin(self, nick):
         return self.owner is not None and nick == self.owner
 
-    def handles_admin_command(self, command):
+    def handles_admin_command(self, command, params=None, last_collects=False):
         def decorator(f):
             f = admin_command_handler(self.is_admin, f)
-            self.bot.add_command_handler(command, f)
+            self.bot.add_command_handler(command, f, params, last_collects=last_collects)
             return f
         return decorator
 
@@ -50,7 +51,7 @@ class Admin:
 def join(bot, command):
     if len(command.params) != 1:
         raise Exception
-    channel = command.params[0]
+    channel = command.params.channel
     return bot.send_message(irc.messages.Join(channel))
 
 
@@ -58,7 +59,7 @@ def join(bot, command):
 def part(bot, command):
     if len(command.params) != 1:
         raise Exception
-    channel = command.params[0]
+    channel = command.params.channel
     return bot.send_message(irc.messages.Part(channel))
 
 
@@ -69,4 +70,4 @@ def quit(bot, command):
 
 @asyncio.coroutine
 def raw(bot, command):
-    return bot.send_raw(bytes(command.params_string + '\r\n', encoding='utf8'))
+    return bot.send_raw(bytes(command.params.raw_string + '\r\n', encoding='utf8'))

@@ -58,6 +58,6 @@ class Pass(Message):
 
 
 class PrivMsg(Message):
-    def __init__(self, target, message):
+    def __init__(self, target, message, prefix=None):
         params = [target, message]
-        super().__init__(params)
+        super().__init__(params, prefix=prefix)

@@ -2,7 +2,7 @@ import unittest
 import unittest.mock
 import asyncio
 import irc.bot
-from irc.command import Command
+import irc.command
 import irc.messages
 import irc.protocol
 import irc.parser
@@ -47,13 +47,13 @@ class TestBot(unittest.TestCase):
 
     def test_non_nick_destination(self):
         b = irc.bot.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
-        self.assertEquals(b.destination(Command('OtherNick', 'test', '#channel', [])), '#channel')
+        self.assertEquals(b.destination(irc.command.Command('OtherNick', 'test', '#channel', [])), '#channel')
 
     def test_nick_destination(self):
         b = irc.bot.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
         b.attempted_nick = None
         b.nick = 'TulipBot'
-        self.assertEquals(b.destination(Command('OtherNick', 'test', 'TulipBot', [])), 'OtherNick')
+        self.assertEquals(b.destination(irc.command.Command('OtherNick', 'test', 'TulipBot', [])), 'OtherNick')
 
     def test_handle_welcome(self):
         stream = irc.parser.StreamProtocol(loop=self.loop)

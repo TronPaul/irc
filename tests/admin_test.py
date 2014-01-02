@@ -2,10 +2,11 @@ import unittest
 import unittest.mock
 import asyncio
 import irc.bot
-from irc.command import Command
+import irc.command
 import irc.parser
 import irc.messages
 import irc_admin
+import tests.utils
 
 
 class TestAdmin(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestAdmin(unittest.TestCase):
         self.patch_connect()
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
 
-        self.assertRaises(PermissionError, wrapped_func, b, Command('Nick', 'test', 'target', []))
+        self.assertRaises(PermissionError, wrapped_func, b, irc.command.Command('Nick', 'test', 'target', []))
         self.assertFalse(called)
 
     def test_wrapper_with_permissions(self):
@@ -63,26 +64,40 @@ class TestAdmin(unittest.TestCase):
         wrapped_func = irc_admin.admin_command_handler(lambda x: True, func)
         self.patch_connect()
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
-        wf_task = asyncio.Task(wrapped_func(b, Command('Nick', 'test', 'target', [])), loop=self.loop)
+        wf_task = asyncio.Task(wrapped_func(b, irc.command.Command('Nick', 'test', 'target', [])), loop=self.loop)
         self.loop.run_until_complete(wf_task)
         self.assertTrue(called)
 
     def test_join(self):
-        transport, _ = self.patch_connect()
+        stream = irc.parser.StreamProtocol(loop=self.loop)
+        stream.feed_data(irc.messages.PrivMsg('#channel', ';join #newchan', prefix='admin!Admin@admin.com').encode())
+        stream.feed_eof()
+
+        transport, _ = self.patch_connect(protocol=stream)
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        b.config['OWNER'] = 'admin'
+        irc_admin.Admin(b)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        join_task = irc_admin.join(b, Command('Nick', 'join', '#chan', ['#newchan']))
-        self.loop.run_until_complete(join_task)
+        self.loop.run_until_complete(b._read_handler)
+        tests.utils.run_briefly(self.loop)
+        tests.utils.run_briefly(self.loop)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Join('#newchan').encode()))
 
     def test_part(self):
-        transport, _ = self.patch_connect()
+        stream = irc.parser.StreamProtocol(loop=self.loop)
+        stream.feed_data(irc.messages.PrivMsg('#channel', ';part #oldchan', prefix='admin!Admin@admin.com').encode())
+        stream.feed_eof()
+
+        transport, _ = self.patch_connect(protocol=stream)
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        b.config['OWNER'] = 'admin'
+        irc_admin.Admin(b)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        part_task = irc_admin.part(b, Command('Nick', 'part', '#chan', ['#oldchan']))
-        self.loop.run_until_complete(part_task)
+        self.loop.run_until_complete(b._read_handler)
+        tests.utils.run_briefly(self.loop)
+        tests.utils.run_briefly(self.loop)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Part('#oldchan').encode()))
 
     def test_quit(self):
@@ -90,15 +105,22 @@ class TestAdmin(unittest.TestCase):
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        quit_task = irc_admin.quit(b, Command('Nick', 'quit', '#chan', []))
+        quit_task = irc_admin.quit(b, irc.command.Command('Nick', 'quit', '#chan', []))
         self.loop.run_until_complete(quit_task)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Quit().encode()))
 
     def test_raw(self):
-        transport, _ = self.patch_connect()
+        stream = irc.parser.StreamProtocol(loop=self.loop)
+        stream.feed_data(irc.messages.PrivMsg('#channel', ';raw PRIVMSG target the string baby', prefix='admin!Admin@admin.com').encode())
+        stream.feed_eof()
+
+        transport, _ = self.patch_connect(protocol=stream)
         b = irc.IrcBot('irc.example.com', 'TulipBot', loop=self.loop)
+        b.config['OWNER'] = 'admin'
+        irc_admin.Admin(b)
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
-        raw_task = irc_admin.raw(b, Command('Nick', 'raw', '#chan', ['PRIVMSG target the string baby']))
-        self.loop.run_until_complete(raw_task)
+        self.loop.run_until_complete(b._read_handler)
+        tests.utils.run_briefly(self.loop)
+        tests.utils.run_briefly(self.loop)
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(b'PRIVMSG target the string baby\r\n'))

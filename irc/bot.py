@@ -28,18 +28,19 @@ class IrcBot(irc.client.IrcClient):
         else:
             return command.target
 
-    def add_command_handler(self, command, handler):
-        self.command_handlers[command] = handler
-
-    def handles_command(self, command_name, params=None, last_collects=False):
+    def add_command_handler(self, command, f, params=None, last_collects=irc.command.LastParamType.normal):
         if params:
-            parse_fn = irc.command.make_params_parser(command_name, params, last_collects)
+            parse_fn = irc.command.make_params_parser(command, params, last_collects)
         else:
             parse_fn = irc.command.empty_parser
 
+        self.command_handlers[command] = irc.command.CommandHandler(parse_fn, f)
+
+    def handles_command(self, command_name, params=None, last_collects=False):
+
         def decorator(f):
             assert asyncio.tasks.iscoroutinefunction(f)
-            self.add_command_handler(command_name, (parse_fn, f))
+            self.add_command_handler(command_name, f, params, last_collects)
             return f
 
         return decorator
