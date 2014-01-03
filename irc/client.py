@@ -92,7 +92,7 @@ class IrcClient:
                 if (inspect.isgenerator(handler) or
                         isinstance(handler, asyncio.Future)):
                     handler_task = yield from handler
-                    self.tasks.put(handler_task)
+                    self.tasks.put_nowait(handler_task)
                     handler_task.add_done_callback(self.cleanup_handler_task)
             except irc.parser.EofStream:
                 break
