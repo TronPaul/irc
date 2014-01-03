@@ -68,4 +68,4 @@ def handle_privmsg(bot, message):
             params = handler.params_parser(params_string)
             command = irc.command.Command(sender, cmd, target, params)
 
-            asyncio.Task(handler.command_function(bot, command), loop=bot.loop)
+            yield from handler.command_function(bot, command)

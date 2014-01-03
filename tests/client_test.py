@@ -151,7 +151,7 @@ class TestClient(unittest.TestCase):
         start_task = asyncio.Task(c.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
         self.loop.run_until_complete(c.quit())
-        tests.utils.run_briefly(self.loop)
+        self.loop.run_until_complete(asyncio.Task(c.tasks.join(), loop=self.loop))
         self.assertTrue(c._send_handler.cancelled())
         self.assertTrue(c._read_handler.cancelled())
 

@@ -48,6 +48,7 @@ class IrcClient:
 
         self._loop = loop or asyncio.get_event_loop()
         self._send_queue = asyncio.queues.Queue(loop=self.loop)
+        self.tasks = asyncio.queues.JoinableQueue(loop=self.loop)
         self.throttle = throttle
 
         self.message_log = message_log
@@ -90,11 +91,16 @@ class IrcClient:
                 handler = self.handle_message(message)
                 if (inspect.isgenerator(handler) or
                         isinstance(handler, asyncio.Future)):
-                    yield from handler
+                    handler_task = yield from handler
+                    self.tasks.put(handler_task)
+                    handler_task.add_done_callback(self.cleanup_handler_task)
             except irc.parser.EofStream:
                 break
             except irc.protocol.ProtocolViolationError as e:
                 IRC_LOG.warn('Recieved malformed message "{raw}"'.format(raw=e.raw))
+
+    def cleanup_handler_task(self, handler_task):
+        self.tasks.task_done()
 
     @asyncio.coroutine
     def _send_loop(self):
@@ -121,6 +127,7 @@ class IrcClient:
         return decorator
 
     def add_handler(self, irc_command, f):
+        assert asyncio.tasks.iscoroutinefunction(f)
         if irc_command not in self.msg_handlers:
             self.msg_handlers[irc_command] = []
         self.msg_handlers[irc_command].append(f)
@@ -144,7 +151,7 @@ class IrcClient:
             raise irc.codes.PasswordMismatchError
 
         handlers = self.msg_handlers.get(message.command, [])
-        [asyncio.Task(h(self, message), loop=self.loop) for h in handlers]
+        return asyncio.gather(*[h(self, message) for h in handlers], loop=self.loop)
 
     def quit(self):
         fut = self.send_message(irc.messages.Quit())

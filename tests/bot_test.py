@@ -65,7 +65,7 @@ class TestBot(unittest.TestCase):
         start_task = asyncio.Task(b.start(), loop=self.loop)
         self.loop.run_until_complete(start_task)
         self.loop.run_until_complete(b._read_handler)
-        tests.utils.run_briefly(self.loop)
+        self.loop.run_until_complete(asyncio.Task(b.tasks.join(), loop=self.loop))
 
         self.assertEquals(transport.mock_calls[-1], unittest.mock.call.write(irc.messages.Join('b').encode()))
         self.assertEquals(transport.mock_calls[-2], unittest.mock.call.write(irc.messages.Join('a').encode()))
