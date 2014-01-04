@@ -100,6 +100,11 @@ class IrcClient:
                 IRC_LOG.warn('Recieved malformed message "{raw}"'.format(raw=e.raw))
 
     def cleanup_handler_task(self, handler_task):
+        if handler_task.exception():
+            try:
+                raise handler_task.exception()
+            except Exception as e:
+                IRC_LOG.exception(e)
         self.tasks.task_done()
 
     @asyncio.coroutine
@@ -176,4 +181,4 @@ class IrcClient:
 
     def send_raw(self, raw):
         assert type(raw) == bytes
-        return asyncio.async(self._send_queue.put(raw), loop=self.loop)
+        return asyncio.Task(self._send_queue.put(raw), loop=self.loop)
