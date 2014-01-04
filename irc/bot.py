@@ -34,19 +34,20 @@ class IrcBot(irc.client.IrcClient):
         else:
             return command.target
 
-    def add_command_handler(self, command, f, params=None, last_collects=irc.command.LastParamType.normal, default_values=None):
-        if params:
-            parse_fn = irc.command.make_params_parser(command, params, last_collects=last_collects, default_values=default_values)
+    def add_command_handler(self, command, f, param_names=None, last_collects=irc.command.LastParamType.normal, default_values=None):
+        if param_names:
+            parse_fn = irc.command.make_params_parser(command, param_names, last_collects=last_collects, default_values=default_values)
         else:
             parse_fn = irc.command.empty_parser
+            param_names = []
 
-        self.command_handlers[command] = irc.command.CommandHandler(parse_fn, f)
+        self.command_handlers[command] = irc.command.CommandHandler(parse_fn, f, param_names)
 
-    def handles_command(self, command_name, params=None, last_collects=False, default_values=None):
+    def handles_command(self, command_name, param_names=None, last_collects=False, default_values=None):
 
         def decorator(f):
             assert asyncio.tasks.iscoroutinefunction(f)
-            self.add_command_handler(command_name, f, params, last_collects=last_collects, default_values=default_values)
+            self.add_command_handler(command_name, f, param_names, last_collects=last_collects, default_values=default_values)
             return f
 
         return decorator
@@ -81,6 +82,7 @@ def handle_privmsg(bot, message):
 def handle_help(bot, command):
     """Get help text for commands"""
     command_str = command.params.command
+    usage = None
     if not command_str:
         commands = ', '.join(bot.command_handlers.keys())
         msg = BASE_HELP_MSG.format(commands=commands, prefix=bot.command_prefix)
@@ -89,7 +91,10 @@ def handle_help(bot, command):
         if not handler:
             help_text = 'Does not exist'
         else:
-            help_text = handler.command_function.__doc__
-        msg = '{0}: {1}'.format(command_str, help_text.strip())
+            help_text = handler.command_function.__doc__ or 'No help given'
+            usage = '{0}{1} {2}'.format(bot.command_prefix, command_str, ' '.join(p.upper() for p in handler.param_names))
+        msg = '{0}: {1}'.format(command_str, help_text.strip().replace('\n', ' '))
     for line in msg.split('\n'):
         yield from command.reply(bot, line.strip())
+    if usage:
+        yield from command.reply(bot, usage)

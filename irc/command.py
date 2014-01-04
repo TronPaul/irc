@@ -17,7 +17,7 @@ def empty_parser(params_string):
         raise ParamsParseError
 
 
-CommandHandler = collections.namedtuple('CommandHandler', ['params_parser', 'command_function'])
+CommandHandler = collections.namedtuple('CommandHandler', ['params_parser', 'command_function', 'param_names'])
 
 
 def make_params_parser(name, param_names, last_collects=LastParamType.normal, default_values=None):
